@@ -11,6 +11,8 @@ include("manual_data_entries.jl")
 
 system = System("intermediate_sys.json")
 
+# system = sys_DA
+
 plant_metadata = CSV.read(thermal_mapping, DataFrame)
 sced_names = unique(plant_metadata.GeneratorID)
 sced_names = [n for n in sced_names if n ∉ ["SAME", "STORAGE"]]
@@ -37,7 +39,7 @@ for nemonic_name in sced_names
         total_points =
             isempty(sced_data_reg) ? 0.01 : length(sced_data.Ancillary_Service_REGUP)
         regup_points =
-            isempty(sced_data_reg) ? 0.0 :
+            isempty(sced_data_reg) ? 0.0 : 
             sum(.!isapprox.(sced_data.Ancillary_Service_REGUP, 0.0))
         regdown_points =
             isempty(sced_data_reg) ? 0.0 :
@@ -101,11 +103,12 @@ for ((name, T, gens, time_frame), ts) in reserve_map
     set_time_frame!(res, time_frame)
     set_available!(res, true)
     gen_names = [v for (k, v) in names_map if k ∈ gens]
-    components = get_components(ThermalMultiStart, system, x -> get_name(x) ∈ gen_names)
+    components = get_components(x -> get_name(x) ∈ gen_names, ThermalMultiStart, system )
     add_service!(system, res, components)
     if length(get_contributing_devices(system, res)) != length(gens)
         @error "There is something wrong with $name"
     end
 end
 
-to_json(system, "intermediate_sys.json"; force = true)
+
+to_json(system, "intermediate_sys_w_services.json"; force = true)
