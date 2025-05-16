@@ -1,4 +1,4 @@
-include("file_pointers.jl")
+                                                include("file_pointers.jl")
 include("system_build_functions.jl")
 include("manual_data_entries.jl")
 
@@ -15,7 +15,7 @@ h5open(perfect_load_time_series_realtime, "r") do file
     for area in get_components(Area, sys_base)
         hour_ahead_forecast = Dict{Dates.DateTime, Vector{Float64}}()
         @show group_name = get_name(area)
-        loads = get_components(PowerLoad, sys_base, x -> get_area(get_bus(x)) == area)
+        loads = get_components(x -> get_area(get_bus(x)) == area, PowerLoad, sys_base)
         peak_area_load = sum(get_max_active_power.(loads))
         full_table = read(file, group_name)
         @show ts_area_peak_load = maximum(full_table[:, 1])

@@ -6,7 +6,8 @@ configure_logging(file_level = Logging.Info, console_level = Logging.Info)
 
 sys = System("intermediate_sys.json")
 
-wind_units = get_components(RenewableGen, sys, x -> get_prime_mover(x) == PrimeMovers.WT)
+wind_units = get_components(x -> get_prime_mover_type(x) == PrimeMovers.WT, RenewableDispatch, sys)
+
 
 for unit in wind_units
     make_wind_units(sys, unit)
