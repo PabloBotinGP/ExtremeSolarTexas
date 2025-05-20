@@ -12,10 +12,11 @@ using Shapefile
 using ProgressMeter
 const PSY = PowerSystems
 using JuMP
-using CPLEX
+using Xpress
 using HDF5
-using Plots
+#using Plots
 using JSON
+
 
 function complete_lines_characteristic_impedance!(line_params, sys)
     z_c_data =
@@ -75,7 +76,7 @@ function write_gen_buses_geo_data(sys, file_name)
                 get_name(bus),
                 get_name(g),
                 "POINT ($(get_ext(bus)["x"]) $(get_ext(bus)["y"]))",
-                string(get_prime_mover(g)),
+                string(get_prime_mover_type(g)),
                 get_base_power(g),
             ],
         )
@@ -113,43 +114,43 @@ function get_line(sys, bus_number::Int)
     return collect(branch)
 end
 
-function get_line(sys, bus_numbers::Tuple)
-    bus_1 = first(get_components(Bus, sys, x -> get_number(x) == bus_numbers[1]))
-    bus_2 = first(get_components(Bus, sys, x -> get_number(x) == bus_numbers[2]))
-    branch_1 = get_components(
-        Line,
-        sys,
-        x -> (get_from(get_arc(x)) == bus_1) && (get_to(get_arc(x)) == bus_2),
-    )
-    if isempty(branch_1)
-        branch_1 = get_components(
-            Line,
-            sys,
-            x -> (get_from(get_arc(x)) == bus_2) && (get_to(get_arc(x)) == bus_1),
-        )
-    end
-    @assert !isempty(branch_1) bus_numbers
-    @assert length(branch_1) < 2 bus_numbers
-    return collect(branch_1)[1]
-end
+# function get_line(sys, bus_numbers::Tuple)
+#     bus_1 = first(get_components(Bus, sys, x -> get_number(x) == bus_numbers[1]))
+#     bus_2 = first(get_components(Bus, sys, x -> get_number(x) == bus_numbers[2]))
+#     branch_1 = get_components(
+#         Line,
+#         sys,
+#         x -> (get_from(get_arc(x)) == bus_1) && (get_to(get_arc(x)) == bus_2),
+#     )
+#     if isempty(branch_1)
+#         branch_1 = get_components(
+#             Line,
+#             sys,
+#             x -> (get_from(get_arc(x)) == bus_2) && (get_to(get_arc(x)) == bus_1),
+#         )
+#     end
+#     @assert !isempty(branch_1) bus_numbers
+#     @assert length(branch_1) < 2 bus_numbers
+#     return collect(branch_1)[1]
+# end
 
-function drop_arc!(sys, a::Tuple)
-    line = get_line(sys, a)
-    set_available!(line, false)
-    try
-        Ybus(sys)
-        remove_component!(sys, line)
-        remove_component!(sys, get_arc(line))
-        @info "removed $(get_name(line))"
-    catch e
-        @show e
-        error("Failed to remove $(get_name(line))")
-        set_available!(line, true)
-    end
-end
+# function drop_arc!(sys, a::Tuple)
+#     line = get_line(sys, a)
+#     set_available!(line, false)
+#     try
+#         Ybus(sys)
+#         remove_component!(sys, line)
+#         remove_component!(sys, get_arc(line))
+#         @info "removed $(get_name(line))"
+#     catch e
+#         @show e
+#         error("Failed to remove $(get_name(line))")
+#         set_available!(line, true)
+#     end
+# end
 
 function make_new_bus(bus_numer, bus_data, voltage_set_point)
-    return Bus(
+    return ACBus(
         number = bus_numer,
         name = bus_data[2],
         bustype = bus_data[4],
@@ -210,7 +211,7 @@ function add_line!(sys, new_arc::Tuple)
             r = data.impedance[2] * new_arc[4] / data.xr_ratio[2],
             x = data.impedance[2] * new_arc[4],
             b = get_bc(data.impedance[2] * new_arc[4], base_voltage, data),
-            rate = 42.40 * (new_arc[4] / 1.6)^(-0.6595),
+            rating = 42.40 * (new_arc[4] / 1.6)^(-0.6595),
             angle_limits = (-π / 4, π / 4),
         )
         add_component!(sys, new_line)
@@ -259,7 +260,7 @@ function add_transformer!(sys, new_arc)
             x = data.impedance[2],
             primary_shunt = 0.0,
             tap = 1.0,
-            rate = 2000.0,
+            rating = 2000.0,
         )
         add_component!(sys, new_transformer)
     catch e
@@ -271,10 +272,10 @@ function add_pv_plant!(sys, plant::Tuple)
     @info "added" plant[1]
     data = solar[solar.site_ids .== plant[1], :]
     @assert !isempty(data)
-    gen_bus = get_component(Bus, sys, plant[2])
+    gen_bus = get_component(ACBus, sys, plant[2])
 
-    shunts = get_components(FixedAdmittance, sys, x -> get_bus(x) == gen_bus)
-    gens = get_components(RenewableGen, sys, x -> get_bus(x) == gen_bus)
+    shunts = get_components( x -> get_bus(x) == gen_bus, FixedAdmittance, sys)
+    gens = get_components(x -> get_bus(x) == gen_bus, RenewableGen, sys)
 
     if !isempty(shunts)
         for e in shunts
@@ -286,14 +287,14 @@ function add_pv_plant!(sys, plant::Tuple)
     if !isempty(gens)
         for g in gens
             set_active_power!(g, 0.0)
-            if occursin(r"gen", get_name(g)) || get_prime_mover(g) != PrimeMovers.PVe
+            if occursin(r"gen", get_name(g)) || get_prime_mover_type(g) != PrimeMovers.PVe
                 remove_component!(sys, g)
                 @info "removed generator $(get_name(g)) in bus $(get_name(gen_bus))"
             end
         end
     end
 
-    set_bustype!(gen_bus, BusTypes.PV)
+    set_bustype!(gen_bus, ACBusTypes.PV)
     pv_gen = RenewableDispatch(;
         name = data.site_ids[1],
         available = true,
@@ -301,11 +302,11 @@ function add_pv_plant!(sys, plant::Tuple)
         active_power = 0.2,
         reactive_power = 0.01,
         rating = 1.0,
-        prime_mover = PSY.PrimeMovers.PVe,
+        prime_mover_type = PrimeMovers.PVe,
         reactive_power_limits = (min = -99.0, max = 99.0),
         power_factor = 1.0,
         base_power = data.AC_capacity_MW[1],
-        operation_cost = TwoPartCost(nothing),
+        operation_cost = RenewableGenerationCost(nothing),
     )
     add_component!(sys, pv_gen)
     get_ext(sys)["added_power"] += data.AC_capacity_MW[1] * 0.2 / 100
@@ -319,14 +320,14 @@ function add_hydro_plant!(sys, plant::Tuple)
     end
     @assert !isempty(data)
     gen_bus = get_component(Bus, sys, plant[2])
-    shunts = get_components(FixedAdmittance, sys, x -> get_bus(x) == gen_bus)
+    shunts = get_components(x -> get_bus(x) == gen_bus, FixedAdmittance, sys)
     if !isempty(shunts)
         for e in shunts
             remove_component!(sys, e)
             @info "removed shunt $(get_name(e)) in bus $(get_name(gen_bus))"
         end
     end
-    set_bustype!(gen_bus, BusTypes.PV)
+    set_bustype!(gen_bus, ACBusTypes.PV)
     hydro_gen = HydroDispatch(;
         name = plant[1],
         available = true,
@@ -335,9 +336,9 @@ function add_hydro_plant!(sys, plant::Tuple)
         reactive_power = 0.01,
         rating = 1.0,
         active_power_limits = (min = 0.0, max = 0.9),
-        prime_mover = PSY.PrimeMovers.HY,
+        prime_mover_type = PSY.PrimeMovers.HY,
         reactive_power_limits = (min = -0.9, max = 0.9),
-        operation_cost = TwoPartCost(VariableCost(0), 0),
+        operation_cost = HydroGenerationCost(nothing),
         base_power = data.AC_capacity[1],
         ramp_limits = nothing,
         time_limits = nothing,
@@ -488,7 +489,7 @@ function convert_to_pwl(device::PSY.ThermalStandard)
     else
         error()
     end
-    new_var_cost = PSY.VariableCost(pwl_points)
+    new_var_cost = PSY.CostCurve(pwl_points)
     PSY.set_variable!(device.operation_cost, new_var_cost)
     return
 end
@@ -508,14 +509,14 @@ function get_tranche_count(df)
 end
 
 function make_variable_cost(f::Function, pmin, pmax, tranches::Int = 4)
-    break_points = [pmin + i / tranches * (pmax - pmin) for i in 0:tranches]
+    break_points = [pmin + i / tranches * (pmax - pmin) for i in 0:tranches] 
     pwl_points = [(f(p), p) for p in break_points]
-    new_var_cost = PSY.VariableCost([(c - f(pmin), p - pmin) for (c, p) in pwl_points])
+    new_var_cost = PSY.PiecewisePointCurve([(c - f(pmin), p - pmin) for (c, p) in pwl_points])
     slopes = get_slopes(new_var_cost)
     for ix in 1:(length(slopes) - 1)
         if slopes[ix] > slopes[ix + 1]
             @error slopes
-            error("pwl_slopes not convex")
+            @error("pwl_slopes not convex")
         end
     end
     return new_var_cost
@@ -585,7 +586,7 @@ function get_cost_data_from_sced(sced_data, name, LSL, HSL, make_plots)
         if isapprox(mean_linear, 0.0; atol = 1e-4) && isapprox(mean_quad, 0.0; atol = 1e-4)
             @error "bad cost function data $name"
             _write_cost_function_data(name, [0.0, 0.0], median_intercept)
-            return start_up, -99.0, VariableCost(nothing)
+            return start_up, -99.0, ThermalGenerationCost(nothing)
         end
         quad, linear, intercept = (mean_quad, mean_linear, mean_intercept)
         quad_f = quad_f_mean
@@ -611,7 +612,7 @@ function get_cost_data_from_sced(sced_data, name, LSL, HSL, make_plots)
         plot!(p, xlabel = "Power [MW]", ylabel = "Price [\$]")
         savefig(p, joinpath(COST_FUNCTION_PATHS, "$(name).pdf"))
     end
-    return start_up, no_load, variable_cost
+    return start_up, no_load
 end
 
 function get_cost_data_from_sced_linear(sced_data, name, LSL, HSL, make_plots)
@@ -650,9 +651,10 @@ function _write_cost_function_data(name, polynomial_points, fixed_cost)
     end
 end
 
-function get_cost_data_from_gen(gen, name, LSL, HSL, make_plots)
+function get_cost_data_from_gen(gen, name, LSL, HSL)
     gen_cost = get_operation_cost(gen)
-    polynomial_points = get_variable(gen_cost) |> get_cost
+    polynomial_points = get_value_curve(get_variable(gen_cost)) |>
+    x -> [get_quadratic_term(x), get_proportional_term(x), get_constant_term(x)]
     quad_f =
         x ->
             (polynomial_points[1] / 100^2) * x^2 +
@@ -660,17 +662,21 @@ function get_cost_data_from_gen(gen, name, LSL, HSL, make_plots)
             get_fixed(gen_cost)
     _write_cost_function_data(name, polynomial_points, get_fixed(gen_cost))
     new_var_cost = make_variable_cost(quad_f, LSL, HSL)
-    if make_plots
-        p = plot(legend = :outertopright)
-        plot!(p, quad_f, xlim = [LSL, HSL], label = "quadratic_model")
-        plot!(p, [(LSL, 0), (LSL, quad_f(HSL))], label = "LSL")
-        plot!(p, [(HSL, 0), (HSL, quad_f(HSL))], label = "HSL")
-        plot!(p, xlabel = "Power [MW]", ylabel = "Price [\$]")
-        savefig(p, joinpath(COST_FUNCTION_PATHS, "$name.pdf"))
-    end
+
+
+    # if make_plots
+    #     p = plot(legend = :outertopright)
+    #     plot!(p, quad_f, xlim = [LSL, HSL], label = "quadratic_model")
+    #     plot!(p, [(LSL, 0), (LSL, quad_f(HSL))], label = "LSL")
+    #     plot!(p, [(HSL, 0), (HSL, quad_f(HSL))], label = "HSL")
+    #     plot!(p, xlabel = "Power [MW]", ylabel = "Price [\$]")
+    #     savefig(p, joinpath(COST_FUNCTION_PATHS, "$name.pdf"))
+    # end
     start_up = (hot = 0.0, warm = 0.0, cold = 0.0)
     return start_up, quad_f(LSL), new_var_cost
 end
+
+
 
 function _get_coal_key(size)
     size <= coal_size_lims["SMALL"] && return ("CLLIG", "SMALL")
@@ -774,7 +780,7 @@ function make_thermal_gen(
     HSL,
     sced_data = nothing,
     ercot_fuel = nothing,
-    plot = true,
+    plot = false,
 )
     if LSL > HSL
         error("LSL > HSL")
@@ -792,17 +798,18 @@ function make_thermal_gen(
     set_point = original_set_point > q_limits.max ? q_limits.max : original_set_point
     set_reactive_power!(temp_gen, max(set_point, q_limits.min))
     set_rating!(temp_gen, rating)
-    set_prime_mover!(temp_gen, prime_mover_map[prime_mover])
+    set_prime_mover_type!(temp_gen, prime_mover_map[prime_mover])
     set_fuel!(temp_gen, fuel_map[fuel])
     set_active_power_limits!(temp_gen, p_limits)
     set_reactive_power_limits!(temp_gen, q_limits)
     set_time_at_status!(temp_gen, 8760)
     set_base_power!(temp_gen, base_power)
-    op_cost = MultiStartCost(nothing)
+    op_cost = ThermalGenerationCost(nothing)
 
-    if sced_data !== nothing
-        start_up, no_load, variable_cost =
-            get_cost_data_from_sced(sced_data, name, LSL, HSL, plot)
+    if hasproperty(sced_data, :Submitted_TPO_MW1)
+        op_cost = build_thermal_cost(sced_data)
+	set_operation_cost!(temp_gen, op_cost)
+	start_up, no_load = start_up_no_load(sced_data)
         if no_load == -99
             _, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL, plot)
         end
@@ -811,10 +818,9 @@ function make_thermal_gen(
     end
     set_start_up!(op_cost, start_up)
     set_shut_down!(op_cost, 0.2 * start_up.hot)
-    set_variable!(op_cost, variable_cost)
-    set_no_load!(op_cost, no_load)
-    set_operation_cost!(temp_gen, op_cost)
-
+    #set_variable!(op_cost, variable_cost)
+    #set_no_load!(op_cost, no_load)
+    #set_operation_cost!(temp_gen, op_cost)
     duration_limits = _get_duration_limits(prime_mover, fuel, ercot_fuel, base_power)
     set_time_limits!(temp_gen, duration_limits)
 
@@ -830,7 +836,7 @@ function make_thermal_gen(
     power_trajectory =
         _get_power_trajectory(prime_mover, fuel, ercot_fuel, p_limits, base_power)
     set_power_trajectory!(temp_gen, power_trajectory)
-
+	@show("added power trajectory")
     @info "$(name)"
     temp_gen.ext["ERCOT_FUEL"] = ercot_fuel !== nothing ? ercot_fuel : "Missing"
     return temp_gen
@@ -854,7 +860,7 @@ function make_thermal_gen_nuc(
     set_active_power!(temp_gen, p_limits.max)
     set_reactive_power!(temp_gen, 0.0)
     set_rating!(temp_gen, rating)
-    set_prime_mover!(temp_gen, prime_mover_map[prime_mover])
+    set_prime_mover_type!(temp_gen, prime_mover_map[prime_mover])
     set_fuel!(temp_gen, fuel_map[fuel])
     set_active_power_limits!(temp_gen, p_limits)
     set_reactive_power_limits!(temp_gen, q_limits)
@@ -865,16 +871,36 @@ function make_thermal_gen_nuc(
     set_start_types!(temp_gen, 3)
     set_time_at_status!(temp_gen, 8760)
     set_base_power!(temp_gen, base_power)
-    op_cost = MultiStartCost(nothing)
+    op_cost = ThermalGenerationCost(nothing)
     set_start_up!(op_cost, (hot = 1e4, warm = 1e4, cold = 1e4))
     set_shut_down!(op_cost, 1e6)
     new_var_cost = make_variable_cost(x -> 0.01 * x + 0.01 * LSL, LSL, HSL, 1)
-    set_variable!(op_cost, new_var_cost)
-    set_no_load!(op_cost, 0.0)
-    set_operation_cost!(temp_gen, op_cost)
+    fixed = 0.0
+    start_up = (hot = 1e4, warm = 1e4, cold = 1e4)
+    shut_down = 1e6
+    cost_curve = CostCurve(new_var_cost)
+    cost = ThermalGenerationCost(cost_curve, fixed, start_up, shut_down)
+    #set_variable!(op_cost, cost)
+    ##set_no_load!(op_cost, 0.0)
+    set_operation_cost!(temp_gen, cost)
     set_must_run!(temp_gen, true)
     temp_gen.ext["ERCOT_FUEL"] = "NUC"
     @info "$(name)"
+    # op_cost = ThermalGenerationCost(nothing)
+    # start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL)
+    # # end
+    # set_start_up!(op_cost, (hot = 1e4, warm = 1e4, cold = 1e4))
+    # set_shut_down!(op_cost, 1e6)
+    # new_var_cost = make_variable_cost(x -> 0.01 * x + 0.01 * LSL, LSL, HSL, 1)
+    # new_var_cost_curve = CostCurve(variable_cost)
+    # set_variable!(op_cost, new_var_cost)
+    # cost = ThermalGenerationCost(new_var_cost_curve, no_load, start_up, 1e6 )
+    # # set_no_load_cost!(op_cost, 0.0)
+    # # var_cost = build_curve(sced_data)
+    # set_operation_cost!(temp_gen, cost )
+    # set_must_run!(temp_gen, true)
+    # temp_gen.ext["ERCOT_FUEL"] = "NUC"
+    # @info "$(name)"
     return temp_gen
 end
 
@@ -901,13 +927,13 @@ function make_thermal_gen_st(
     set_active_power!(temp_gen, p_limits.min)
     set_reactive_power!(temp_gen, 0.0)
     set_rating!(temp_gen, rating)
-    set_prime_mover!(temp_gen, prime_mover_map[prime_mover])
+    set_prime_mover_type!(temp_gen, prime_mover_map[prime_mover])
     set_fuel!(temp_gen, fuel_map[fuel])
     set_active_power_limits!(temp_gen, p_limits)
     set_reactive_power_limits!(temp_gen, q_limits)
     set_time_at_status!(temp_gen, 8760)
     set_base_power!(temp_gen, base_power)
-    op_cost = MultiStartCost(nothing)
+    op_cost = ThermalGenerationCost(nothing)
 
     if sced_data !== nothing
         start_up, no_load, variable_cost =
@@ -934,9 +960,11 @@ function make_thermal_gen_st(
 
     set_start_up!(op_cost, start_up)
     set_shut_down!(op_cost, 0.2 * start_up.hot)
-    set_variable!(op_cost, variable_cost)
-    set_no_load!(op_cost, no_load)
-    set_operation_cost!(temp_gen, op_cost)
+    variable_cost_curve = CostCurve(variable_cost)
+    set_variable!(op_cost, variable_cost_curve)
+    # set_no_load!(op_cost, no_load)
+    op_cost = build_thermal_cost(sced_data)
+    set_operation_cost!(temp_gen, op_cost) 
     temp_gen.ext["ERCOT_FUEL"] = ercot_fuel !== nothing ? ercot_fuel : "Missing"
     @info "$(name)"
     return temp_gen
@@ -965,7 +993,7 @@ function _rescale_power(original_gen::ThermalStandard, LSL, HSL)
 end
 
 function make_storage(original_gen::ThermalStandard; name)
-    temp = GenericBattery(nothing)
+    temp = EnergyReservoirStorage(nothing)
     base_power = get_base_power(original_gen)
     if base_power < 10
         base_power = base_power * 15
@@ -978,11 +1006,11 @@ function make_storage(original_gen::ThermalStandard; name)
     set_name!(temp, replace(name, " " => "_"))
     set_available!(temp, true)
     set_bus!(temp, get_bus(original_gen))
-    set_prime_mover!(temp, PrimeMovers.BA)
+    set_prime_mover_type!(temp, PrimeMovers.BA)
     gen_max_active_power = original_gen.active_power_limits.max
-    c_rating = randperm!([2, 3, 4])[1]
-    set_initial_energy!(temp, 0.0)
-    set_state_of_charge_limits!(temp, (min = 0.0, max = gen_max_active_power * c_rating))
+    c_rating = 1 #randperm!([2, 3, 4])[1]
+    set_initial_storage_capacity_level!(temp, 0.0)
+    set_storage_level_limits!(temp, (min = 0.0, max = gen_max_active_power * c_rating))
     set_active_power!(temp, get_active_power(original_gen) / base_power)
     set_reactive_power!(temp, 0.0)
     set_input_active_power_limits!(temp, (min = 0.0, max = gen_max_active_power))
@@ -1033,8 +1061,9 @@ function get_sced_data(file_name, name)
 end
 
 function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
-    m = Model(CPLEX.Optimizer)
-    JuMP.set_silent(m)
+    m = Model(Xpress.Optimizer; )
+    set_optimizer_attribute(m, "XPRS_MAXTIME", 10)
+    #JuMP.set_silent(m)
     n_bp = length(price)
     @variable(m, var_price[1:n_bp] >= 0)
     @variable(m, quad_mult >= 0)
@@ -1048,12 +1077,34 @@ function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
     )
     @objective(m, Min, sum((price[i] - var_price[i])^2 for i in 1:n_bp))
     optimize!(m)
+    # Chcek solver's termination status 
+    termination_status = JuMP.termination_status(m)
+    if termination_status == MOI.TIME_LIMIT
+        println("Solver stopped due to the time limit.")
+        
+    elseif termination_status == MOI.OPTIMAL
+        println("Solver found an optimal solution.")
+    elseif termination_status == MOI.INFEASIBLE
+        println("The problem is infeasible.")
+        
+    else
+        println("Solver terminated with status: ", termination_status)
+    end
+    if has_values(m)
+        println("Objective value: ", objective_value(m))
+        println("quad_mult: ", value(quad_mult))
+        println("linear_mult: ", value(linear_mult))
+        println("intercept: ", value(intercept))
+    else
+        println("No feasible solution was found or no results are available.")
+    end
     return value(quad_mult), value(linear_mult), value(intercept)
 end
 
 function get_median_quadratic_model(gen, price, quad_term::Bool = true)
-    m = Model(CPLEX.Optimizer)
-    JuMP.set_silent(m)
+    m = Model(Xpress.Optimizer)
+    set_optimizer_attribute(m, "XPRS_MAXTIME", 5)
+    #JuMP.set_silent(m)
     n_bp = length(price)
     @variable(m, var_price[1:n_bp] >= 0)
     @variable(m, z[1:n_bp] >= 0)
@@ -1070,7 +1121,36 @@ function get_median_quadratic_model(gen, price, quad_term::Bool = true)
     @constraint(m, [i in 1:n_bp], (price[i] - var_price[i]) <= z[i])
     @objective(m, Min, sum(z[i] for i in 1:n_bp))
     optimize!(m)
-    return value(quad_mult), value(linear_mult), value(intercept)
+        # Chcek solver's termination status 
+        termination_status = JuMP.termination_status(m)
+        if termination_status == MOI.TIME_LIMIT
+            println("Solver stopped due to the time limit.")
+            configure_logging(filename = "bad_data.txt")
+            @error "Reached Time Limit"
+        elseif termination_status == MOI.OPTIMAL
+            println("Solver found an optimal solution.")
+        elseif termination_status == MOI.INFEASIBLE
+            println("The problem is infeasible.")
+            configure_logging(filename = "bad_data.txt")
+            @info "weird data"        
+        else
+            println("Solver terminated with status: ", termination_status)
+        end
+        if has_values(m)
+            println("Objective value: ", objective_value(m))
+            println("quad_mult: ", value(quad_mult))
+            println("linear_mult: ", value(linear_mult))
+            println("intercept: ", value(intercept))
+            return value(quad_mult), value(linear_mult), value(intercept)
+        else
+            println("No feasible solution was found or no results are available.")
+            quad_mult = 0
+            linear_mult = 0
+            intercept = 0
+            return value(quad_mult), value(linear_mult), value(intercept)
+        end
+        
+
 end
 
 function skip_row(row)
@@ -1119,8 +1199,43 @@ function finalize_system(sys)
     to_json(sys, "base_sys.json"; force = true)
     sys = System("base_sys.json")
     if isa(sys, System)
-        rm("intermediate_sys.json")
-        rm("intermediate_sys_time_series_storage.h5")
-        rm("intermediate_sys_validation_descriptors.json")
+        #rm("intermediate_sys.json")
+        #rm("intermediate_sys_time_series_storage.h5")
+        #rm("intermediate_sys_validation_descriptors.json")
     end
 end
+
+# Building PiecewiseIncrementalCurve 
+
+## ----------------------------------------------------
+# function median_energy(sced_data)
+#     median_values_x = []
+#     tranch_count = get_tranche_count(sced_data)
+#     for i in 1:tranch_count
+#         column_data = sced_data[:, Symbol("Submitted_TPO_MW$i")]
+#         filtered_x = [filter(!isnan, column_data)]
+#         median_value_x = median!(filtered_x)
+#         push!(median_values_x, median_value_x)
+#     end  
+#     println(median_values_x)
+#     end
+    
+#     function median_prices(sced_data)
+#     median_values_m = []
+#     for i in 1:8
+#         column_data = sced_data[:, Symbol("Submitted_TPO_Price$i")]
+#         filtered_m = [filter(!isnan, column_data)]
+#         median_value_m = median!(filtered_m)
+#         push!(median_values_m, median_value_m)
+#     end  
+#     println(median_values_m)
+#     end
+    
+#     function incrementalcurve(median_values_x, median_values_m)
+#         slopes = median_values_m[1:end-1]
+#         LDL = median!(sced_data[:, "LSL"])
+#         cost = PiecewiseIncrementalCurve(LDL, median_values_x, slopes)
+#         print(cost)
+#         plot(median_values_x, median_values_m)    
+#     end
+

@@ -112,3 +112,5 @@ end
 
 
 to_json(system, "intermediate_sys_w_services.json"; force = true)
+
+sys = System("intermediate_sys_w_services.json")

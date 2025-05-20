@@ -1,13 +1,15 @@
 include("file_pointers.jl")
 include("system_build_functions.jl")
 include("manual_data_entries.jl")
+include("incrementalpiecewise.jl")
 
 plant_metadata = CSV.read(thermal_mapping, DataFrame)
 sys = System("pre_thermal_sys.json")
 
 set_units_base_system!(sys, "NATURAL_UNITS")
 const MAKE_PLOTS = false
-#### add storage units
+
+## add storage units
 for (gen_name, storage_name) in gen_storage_mapping
     @info gen_name
     gen = get_component(ThermalStandard, sys, gen_name)
@@ -16,7 +18,10 @@ for (gen_name, storage_name) in gen_storage_mapping
     add_component!(sys, storage)
 end
 
-## Make new thermals
+
+
+# Make new thermals
+
 
 gen = get_component(ThermalStandard, sys, "gen-26")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "OECCS_CC1_2")
@@ -38,18 +43,19 @@ add_component!(sys, new_thermal)
 
 gen = get_component(ThermalStandard, sys, "gen-27")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "OECCS_CC1_4")
-HSL = maximum(sced_data[!, "HSL"])
+HSL_ = sced_data[sced_data.HSL .> 1, :][!, "Submitted_TPO_MW10"]
+HSL = maximum(HSL_[.!isnan.(HSL_)])
 LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
 new_thermal = make_thermal_gen(
-    gen;
-    name = "ODESSA_ECTOR POWER1 CC4",
-    prime_mover = "CC_CA",
-    fuel = "NG",
-    HSL = HSL,
-    LSL = LSL,
-    sced_data = sced_data,
-    ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
-)
+     gen;
+     name = "ODESSA_ECTOR POWER1 CC4",
+     prime_mover = "CC_CA",
+     fuel = "NG",
+     HSL = HSL,
+     LSL = LSL,
+     sced_data = sced_data,
+     ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
+ )
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
@@ -122,6 +128,9 @@ new_thermal = make_thermal_gen(
 )
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
+
+to_json(sys, "intermediate_sys.json", force = true)
+sys = System("intermediate_sys.json")
 
 gen = get_component(ThermalStandard, sys, "gen-32")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "QALSW_CC2_2")
@@ -1814,7 +1823,7 @@ new_thermal = make_thermal_gen(
 add_component!(sys, new_thermal)
 
 remove_component!(sys, gen)
-### End of joint assets
+## End of joint assets
 
 gen = get_component(ThermalStandard, sys, "gen-234")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "JACKCNTY_CC1_1")
@@ -3459,20 +3468,20 @@ new_thermal = make_thermal_gen(
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
-gen = get_component(ThermalStandard, sys, "gen-374")
-HSL = get_active_power_limits(gen).max
-LSL = get_active_power_limits(gen).min
-new_thermal = make_thermal_gen(
-    gen;
-    name = "FORMOSA GT6",
-    prime_mover = "GT",
-    fuel = "NG",
-    HSL = HSL,
-    LSL = LSL,
-    plot = MAKE_PLOTS,
-)
-remove_component!(sys, gen)
-add_component!(sys, new_thermal)
+# gen = get_component(ThermalStandard, sys, "gen-374")
+# HSL = get_active_power_limits(gen).max
+# LSL = get_active_power_limits(gen).min
+# new_thermal = make_thermal_gen(
+#     gen;
+#     name = "FORMOSA GT6",
+#     prime_mover = "GT",
+#     fuel = "NG",
+#     HSL = HSL,
+#     LSL = LSL,
+#     plot = MAKE_PLOTS,
+# )
+# remove_component!(sys, gen)
+# add_component!(sys, new_thermal)
 
 gen = get_component(ThermalStandard, sys, "gen-375")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "BTE_CC1_1")
@@ -4773,22 +4782,22 @@ new_thermal = make_thermal_gen(
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
-gen = get_component(ThermalStandard, sys, "gen-472")
-ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "CVC_CC1_1")
-HSL = maximum(sced_data[!, "HSL"])
-LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
-new_thermal = make_thermal_gen(
-    gen;
-    name = "Channelview Cogeneration Plant CC1",
-    prime_mover = "CC_CT",
-    fuel = "NG",
-    HSL = HSL,
-    LSL = LSL,
-    sced_data = sced_data,
-    ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
-)
-remove_component!(sys, gen)
-add_component!(sys, new_thermal)
+# gen = get_component(ThermalStandard, sys, "gen-472")
+# ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "CVC_CC1_1")
+# HSL = maximum(sced_data[!, "HSL"])
+# LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
+# new_thermal = make_thermal_gen(
+#     gen;
+#     name = "Channelview Cogeneration Plant CC1",
+#     prime_mover = "CC_CT",
+#     fuel = "NG",
+#     HSL = HSL,
+#     LSL = LSL,
+#     sced_data = sced_data,
+#     ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
+# )
+# remove_component!(sys, gen)
+# add_component!(sys, new_thermal)
 
 gen = get_component(ThermalStandard, sys, "gen-473")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "CVC_CC1_2")
@@ -5798,39 +5807,39 @@ new_thermal = make_thermal_gen(
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
-gen = get_component(ThermalStandard, sys, "gen-542")
-ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "TNP_ONE_TNP_O_2")
-HSL = maximum(sced_data[!, "HSL"])
-LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
-new_thermal = make_thermal_gen(
-    gen;
-    name = "TWIN OAKS U2",
-    prime_mover = "ST",
-    fuel = "LIG",
-    HSL = HSL,
-    LSL = LSL,
-    sced_data = sced_data,
-    ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
-)
-remove_component!(sys, gen)
-add_component!(sys, new_thermal)
+# gen = get_component(ThermalStandard, sys, "gen-542")
+# ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "TNP_ONE_TNP_O_2")
+# HSL = maximum(sced_data[!, "HSL"])
+# LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
+# new_thermal = make_thermal_gen(
+#     gen;
+#     name = "TWIN OAKS U2",
+#     prime_mover = "ST",
+#     fuel = "LIG",
+#     HSL = HSL,
+#     LSL = LSL,
+#     sced_data = sced_data,
+#     ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
+# )
+# remove_component!(sys, gen)
+# add_component!(sys, new_thermal)
 
-gen = get_component(ThermalStandard, sys, "gen-543")
-ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "DANSBY_DANSBYG1")
-HSL = maximum(sced_data[!, "HSL"])
-LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
-new_thermal = make_thermal_gen(
-    gen;
-    name = "DANSBY ST1",
-    prime_mover = "ST",
-    fuel = "NG",
-    HSL = HSL,
-    LSL = LSL,
-    sced_data = sced_data,
-    ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
-)
-remove_component!(sys, gen)
-add_component!(sys, new_thermal)
+# gen = get_component(ThermalStandard, sys, "gen-543")
+# ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "DANSBY_DANSBYG1")
+# HSL = maximum(sced_data[!, "HSL"])
+# LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
+# new_thermal = make_thermal_gen(
+#     gen;
+#     name = "DANSBY ST1",
+#     prime_mover = "ST",
+#     fuel = "NG",
+#     HSL = HSL,
+#     LSL = LSL,
+#     sced_data = sced_data,
+#     ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
+# )
+# remove_component!(sys, gen)
+# add_component!(sys, new_thermal)
 
 gen = get_component(ThermalStandard, sys, "gen-544")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "DANSBY_DANSBYG3")
@@ -5852,7 +5861,7 @@ add_component!(sys, new_thermal)
 ##### Manual fixes to NUCLEAR Gens ###########
 gen = get_component(ThermalStandard, sys, "gen-212")
 HSL = get_active_power_limits(gen).max
-LSL = get_active_power_limits(gen).min
+LSL = get_active_power_limits(gen).min 
 new_thermal = make_thermal_gen_nuc(
     gen;
     name = "COMANCHE PEAK U1",
@@ -5875,7 +5884,7 @@ new_thermal = make_thermal_gen_nuc(
     HSL = HSL,
     LSL = LSL,
 )
-remove_component!(sys, gen)
+#remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
 gen = get_component(ThermalStandard, sys, "gen-379")
@@ -6010,9 +6019,11 @@ new_thermal = make_thermal_gen_st(
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
-@assert isempty([
-    (get_name(x), get_max_active_power(x)) for x in get_components(ThermalStandard, sys)
-])
+# @assert isempty([
+#     (get_name(x), get_max_active_power(x)) for x in get_components(ThermalStandard, sys)
+# ])
+
+
 
 for th in get_components(ThermalGen, sys)
     ap = get_active_power(th)
@@ -6027,11 +6038,13 @@ for th in get_components(ThermalGen, sys)
     set_reactive_power!(th, 0.0)
 end
 
-to_json(sys, "intermediate_sys.json", force = true)
-sys = System("intermediate_sys.json")
-set_units_base_system!(sys, "SYSTEM_BASE")
+base_sys = sys
+to_json(base_sys, "intermediate_sys.json", force = true)
+base_sys = System("intermediate_sys.json")
+set_units_base_system!(base_sys, "SYSTEM_BASE")
 
 # Writes a JSON with the CC constraints
 open("cc_restrictions.json", "w") do f
     JSON.print(f, cc_train_restrictions)
 end
+

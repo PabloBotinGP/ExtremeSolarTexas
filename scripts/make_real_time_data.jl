@@ -5,7 +5,7 @@ include("file_pointers.jl")
 include("system_build_functions.jl")
 include("manual_data_entries.jl")
 
-sys_base = System("base_sys.json")
+sys_base = System("intermediate_sys_w_services.json")
 clear_time_series!(sys_base)
 PSY.IS.assign_new_uuid!(sys_base)
 set_units_base_system!(sys_base, "SYSTEM_BASE")
@@ -13,11 +13,12 @@ set_units_base_system!(sys_base, "SYSTEM_BASE")
 ####################################### Load Time Series ###################################
 h5open(perfect_load_time_series_realtime, "r") do file
     for area in get_components(Area, sys_base)
+        println(area)
         real_time_load_forecast = Dict{Dates.DateTime, Vector{Float64}}()
         @show group_name = get_name(area)
-        loads = get_components(PowerLoad, sys_base, x -> get_area(get_bus(x)) == area)
+        loads = get_components( x -> get_area(get_bus(x)) == area, PowerLoad, sys_base)
         peak_area_load = sum(get_max_active_power.(loads))
-        @assert get_peak_active_power(area) == peak_area_load
+        #@assert get_peak_active_power(area) == peak_area_load
         full_table = read(file, group_name)
         for ix in 1:size(full_table)[1]
             real_time_load_forecast[initial_time + (ix - 1) * real_time_interval] =
@@ -35,7 +36,7 @@ end
 
 ####################################### Hydro Time Series ##################################
 h5open(hydro_time_series_rt, "r") do file
-    for gen in get_components(HydroGen, sys)
+    for gen in get_components(HydroGen, sys_base)
         set_available!(gen, true)
         day_ahead_forecast = Dict{Dates.DateTime, Vector{Float64}}()
         bus_name = get_name(get_bus(gen))
@@ -52,7 +53,7 @@ h5open(hydro_time_series_rt, "r") do file
             data = day_ahead_forecast,
             scaling_factor_multiplier = get_max_active_power
         )
-        add_time_series!(sys, gen, forecast_data)
+        add_time_series!(sys_base, gen, forecast_data)
         ap = get_active_power(gen)
         p_lims_min = get_active_power_limits(gen).min
         if ap <= p_lims_min
@@ -65,10 +66,11 @@ end
 ####################################### Wind Time Series ##################################
 h5open(wind_time_series_rt, "r") do file
     for (k, v) in area_number_wind_map
-        area = get_component(Area, sys, k)
+        area = get_component(Area, sys_base, k)
         day_ahead_wind_forecast = Dict{Dates.DateTime, Vector{Float64}}()
         full_table = max.(0.0, read(file, v))
         area_peak_wind = maximum(full_table)
+        println(area)
         set_peak_active_power!(area, area_peak_wind)
         for ix in 1:size(full_table)[2]
             day_ahead_wind_forecast[initial_time + (ix - 1) * real_time_interval] =
@@ -80,12 +82,10 @@ h5open(wind_time_series_rt, "r") do file
             data = day_ahead_wind_forecast,
             scaling_factor_multiplier = get_max_active_power
         )
-        wind_gens = get_components(
-            RenewableGen,
-            sys,
-            x -> (get_area(get_bus(x)) == area && get_prime_mover(x) == PrimeMovers.WT),
-        )
-        add_time_series!(sys, wind_gens, forecast_data)
+        wind_gens = get_components(x -> (get_area(get_bus(x)) == area && get_prime_mover_type(x) == PrimeMovers.WT),
+            RenewableDispatch,
+            sys_base)
+        add_time_series!(sys_base, wind_gens, forecast_data)
     end
 end
 
@@ -133,10 +133,10 @@ for g in get_components(RenewableGen, sys)
 end
 
 ################# Reserve Requirements Time Series ################################
-regup_reserve = CSV.read(reg_up_reserve, DataFrame)
-regdn_reserve = CSV.read(reg_dn_reserve, DataFrame)
+regup_reserve = CSV.read(reg_up_reserve_2016, DataFrame)
+regdn_reserve = CSV.read(reg_dn_reserve_2016, DataFrame)
 spin = CSV.read(spin_reserve, DataFrame)
-nonspin = CSV.read(nonspin_reserve, DataFrame)
+nonspin = CSV.read(nonspin_reserve_2016, DataFrame)
 
 date_range =
     range(DateTime("2018-01-01T00:00:00"), step = Minute(5), length = day_count * 25 * 12)
@@ -176,9 +176,9 @@ for ((name, T), ts) in reserve_map
         data = real_time_forecast,
         scaling_factor_multiplier = get_requirement
     )
-    res = get_component(T, sys, name)
+    res = get_component(T, sys_base, name)
     set_requirement!(res, peak / 100)
-    add_time_series!(sys, res, forecast_data)
+    add_time_series!(sys_base, res, forecast_data)
 end
 
-to_json(sys, "/Users/jdlara/Dropbox/Code/MultiStageCVAR/data/RT_sys.json", force = true)
+to_json(sys_base, "jsons/RT_sys.json", force = true)

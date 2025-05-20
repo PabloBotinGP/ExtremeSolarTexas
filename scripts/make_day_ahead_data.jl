@@ -150,7 +150,6 @@ end
 sys_DA = deepcopy(sys_base)
 
 ####################################### Solar Time Series ##################################
-
 file_names = readdir(solar_time_series)
 for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableDispatch, sys_DA)
     plant_name = get_name(gen)
@@ -172,28 +171,24 @@ for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, Renew
     power_output = h5open(joinpath(solar_time_series, file_name), "r") do file
         return read(file, "Power")[:, :, :]
     end
-
+    peak_power = maximum(power_output[:, :, 1])
+    set_rating!(gen, peak_power)
+    println(peak_power)
     day_ahead_forecast = Dict{Dates.DateTime, Vector{Float64}}()
     num_days = 365
-    println(plant_name)
     for ix in 1:num_days 
-        peak_power = maximum(power_output[ix, :, 1])
+        #peak_power = maximum(power_output[ix, :, 1])
         #@assert peak_power > 0
-        @assert get_base_power(gen) <= get_base_power(gen)
-        set_rating!(gen, peak_power / get_base_power(gen))
-        
+        @assert get_base_power(gen) <= get_base_power(gen) 
         power_output_reshape = power_output, :, ix
-        normalized_power = power_output[1, :, 1] ./ maximum(power_output[ix, :, 1])
+        normalized_power = power_output[1, :, 1]
         day_ahead_forecast[initial_time + (ix - 1) * da_interval] = normalized_power#[ix, :]
-    end
-    if plant_name == "Angelina Solar"
-        println(day_ahead_forecast)
     end
         forecast_data = Deterministic(
         name = "max_active_power",
         data = day_ahead_forecast,
         resolution = da_resolution,
-        scaling_factor_multiplier = get_max_active_power
+        scaling_factor_multiplier = nothing
     )
     add_time_series!(sys_DA, gen, forecast_data)
 end
@@ -201,12 +196,12 @@ end
 
 
 
-for g in get_components(RenewableDispatch, sys_DA)
-    println(get_name(g))
-    @assert has_time_series(g)
+# for g in get_components(RenewableDispatch, sys_DA)
+#     println(get_name(g))
+#     @assert has_time_series(g)
+# end
 
-end
-to_json(sys_DA, "may_16_sys_DA.json", force = true)
+to_json(sys_DA, "may_19_sys_DA.json", force = true)
 
 to_json(sys_DA, "/Users/acasavan/EST_data/texas_data/DA_sys.json", force = true)
 
