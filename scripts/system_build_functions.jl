@@ -510,7 +510,7 @@ end
 
 function make_variable_cost(f::Function, pmin, pmax, tranches::Int = 4)
     break_points = [pmin + i / tranches * (pmax - pmin) for i in 0:tranches] 
-    pwl_points = [(f(p), p) for p in break_points]
+    pwl_points = [(f(p), p) for p in break_points]      
     new_var_cost = PSY.PiecewisePointCurve([(c - f(pmin), p - pmin) for (c, p) in pwl_points])
     slopes = get_slopes(new_var_cost)
     for ix in 1:(length(slopes) - 1)
@@ -811,10 +811,10 @@ function make_thermal_gen(
 	set_operation_cost!(temp_gen, op_cost)
 	start_up, no_load = start_up_no_load(sced_data)
         if no_load == -99
-            _, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL, plot)
+            _, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL)
         end
     else
-        start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL, plot)
+        start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL)
     end
     set_start_up!(op_cost, start_up)
     set_shut_down!(op_cost, 0.2 * start_up.hot)
@@ -874,7 +874,7 @@ function make_thermal_gen_nuc(
     op_cost = ThermalGenerationCost(nothing)
     set_start_up!(op_cost, (hot = 1e4, warm = 1e4, cold = 1e4))
     set_shut_down!(op_cost, 1e6)
-    new_var_cost = make_variable_cost(x -> 0.01 * x + 0.01 * LSL, LSL, HSL, 1)
+    new_var_cost = make_variable_cost(x -> x + LSL, LSL, HSL, 1)
     fixed = 0.0
     start_up = (hot = 1e4, warm = 1e4, cold = 1e4)
     shut_down = 1e6
