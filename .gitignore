@@ -11,6 +11,11 @@ generated*.md
 
 # Test data
 data
+
+# More data
+scripts/input_data/
+*.csv
+
 # Simulation Results
 results
 
