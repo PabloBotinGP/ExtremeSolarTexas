@@ -251,6 +251,8 @@ function add_transformer!(sys, new_arc)
         high_side_voltage = get_base_voltage(from_bus)
         @assert high_side_voltage > get_base_voltage(to_bus)
         data = transformer_params[high_side_voltage]
+        system_base_power = get_base_power(sys)
+        transformer_rating_mva = 2000.0  # Original model specification
         new_transformer = TapTransformer(
             name = string("$(get_name(from_bus)) - $(get_name(to_bus)) - $last_line"),
             available = true,
@@ -259,10 +261,10 @@ function add_transformer!(sys, new_arc)
             arc = Arc(from_bus, to_bus),
             r = data.impedance[2] / data.xr_ratio[2],
             x = data.impedance[2],
-            base_power = 100.0,
+            base_power = system_base_power,  # Use system base for per-unit calculations
             primary_shunt = 0.0,
             tap = 1.0,
-            rating = 2000.0,
+            rating = transformer_rating_mva / system_base_power,  # Convert to per-unit
         )
         add_component!(sys, new_transformer)
     # catch e
