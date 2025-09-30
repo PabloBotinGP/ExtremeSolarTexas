@@ -1,7 +1,7 @@
 using PowerSystems
 using HDF5
 using TimeSeries
-using Dates
+using Dates 
 using CSV
 using DataFrames
 using Statistics
@@ -112,41 +112,6 @@ function get_line(sys, bus_number::Int)
     )
     return collect(branch)
 end
-
-# function get_line(sys, bus_numbers::Tuple)
-#     bus_1 = first(get_components(Bus, sys, x -> get_number(x) == bus_numbers[1]))
-#     bus_2 = first(get_components(Bus, sys, x -> get_number(x) == bus_numbers[2]))
-#     branch_1 = get_components(
-#         Line,
-#         sys,
-#         x -> (get_from(get_arc(x)) == bus_1) && (get_to(get_arc(x)) == bus_2),
-#     )
-#     if isempty(branch_1)
-#         branch_1 = get_components(
-#             Line,
-#             sys,
-#             x -> (get_from(get_arc(x)) == bus_2) && (get_to(get_arc(x)) == bus_1),
-#         )
-#     end
-#     @assert !isempty(branch_1) bus_numbers
-#     @assert length(branch_1) < 2 bus_numbers
-#     return collect(branch_1)[1]
-# end
-
-# function drop_arc!(sys, a::Tuple)
-#     line = get_line(sys, a)
-#     set_available!(line, false)
-#     try
-#         Ybus(sys)
-#         remove_component!(sys, line)
-#         remove_component!(sys, get_arc(line))
-#         @info "removed $(get_name(line))"
-#     catch e
-#         @show e
-#         error("Failed to remove $(get_name(line))")
-#         set_available!(line, true)
-#     end
-# end
 
 function make_new_bus(
     bus_number::Int,
@@ -1278,38 +1243,3 @@ function finalize_system(sys)
         #rm("intermediate_sys_validation_descriptors.json")
     end
 end
-
-# Building PiecewiseIncrementalCurve 
-
-## ----------------------------------------------------
-# function median_energy(sced_data)
-#     median_values_x = []
-#     tranch_count = get_tranche_count(sced_data)
-#     for i in 1:tranch_count
-#         column_data = sced_data[:, Symbol("Submitted_TPO_MW$i")]
-#         filtered_x = [filter(!isnan, column_data)]
-#         median_value_x = median!(filtered_x)
-#         push!(median_values_x, median_value_x)
-#     end  
-#     println(median_values_x)
-#     end
-    
-#     function median_prices(sced_data)
-#     median_values_m = []
-#     for i in 1:8
-#         column_data = sced_data[:, Symbol("Submitted_TPO_Price$i")]
-#         filtered_m = [filter(!isnan, column_data)]
-#         median_value_m = median!(filtered_m)
-#         push!(median_values_m, median_value_m)
-#     end  
-#     println(median_values_m)
-#     end
-    
-#     function incrementalcurve(median_values_x, median_values_m)
-#         slopes = median_values_m[1:end-1]
-#         LDL = median!(sced_data[:, "LSL"])
-#         cost = PiecewiseIncrementalCurve(LDL, median_values_x, slopes)
-#         print(cost)
-#         plot(median_values_x, median_values_m)    
-#     end
-
