@@ -152,6 +152,7 @@ function make_new_bus(
     bus_number::Int,
     bus_data::Tuple{Int, String, Int, ACBusTypes},
     voltage_set_point::Float64,
+    base_voltage::Float64,
 )
     return PowerSystems.ACBus(;
         number = bus_number,
@@ -162,7 +163,7 @@ function make_new_bus(
         magnitude = voltage_set_point,
         voltage_limits = (min=0.9, max=1.1),            
         # base_voltage = float(bus_data[3]), # for testing purposes.
-        base_voltage = bus_data[3],
+        base_voltage = base_voltage,
         # area = nothing, # for testing purposes.
         area = get_component(Area, sys, "$(Int(bus_data[3]/1000))"),
         load_zone = nothing,
@@ -180,32 +181,83 @@ function get_bc(x, base_voltage, data)
 end
 
 function add_line!(sys, new_arc::Tuple)
-    @assert new_arc[4] > 1
-    try
-        from_bus = get_component(Bus, sys, new_arc[2])
-        to_bus = get_component(Bus, sys, new_arc[3])
+    @assert new_arc[4] > 1 # Check that the length is > 1 mile.
+    # try
+        from_bus = get_component(Bus, sys, new_arc[2]) # Load bus 1
+        to_bus = get_component(Bus, sys, new_arc[3]) # Load bus 2
+        
+        # Remember which buses existed originally
+        from_bus_existed = !isnothing(from_bus)
+        to_bus_existed = !isnothing(to_bus)
         if isnothing(from_bus)
-            voltage_set_point = isnothing(to_bus) ? 1.0 : get_magnitude(to_bus)
-            from_bus_data = [b for b in new_buses if b[2] == new_arc[2]][1]
-            end_bus_nums[from_bus_data[3]] = end_bus_nums[from_bus_data[3]] + 1 #add 1 to the last number
-            from_bus = make_new_bus(
+            voltage_set_point = 1.0  # Default voltage magnitude
+            from_bus_data = [b for b in new_buses if b[2] == new_arc[2]][1] # Get bus data from new_buses array.
+            end_bus_nums[from_bus_data[3]] = end_bus_nums[from_bus_data[3]] + 1 # Increment the end bus number.
+            # Use the line's specified voltage (simple and clear)
+            base_voltage = float(new_arc[1])
+            @info "Creating from_bus: using line voltage $(base_voltage) kV"
+            from_bus = make_new_bus( 
                 end_bus_nums[from_bus_data[3]],
                 from_bus_data,
                 voltage_set_point,
+                base_voltage,
             )
-            @info "adding a new bus $(get_name(from_bus)), $(get_number(from_bus))"
+            @info "adding a new bus $(get_name(from_bus)), $(get_number(from_bus)) with base voltage $(base_voltage) kV"
             add_component!(sys, from_bus)
         end
         if isnothing(to_bus)
-            voltage_set_point = isnothing(from_bus) ? 1.0 : get_magnitude(from_bus)
+            voltage_set_point = 1.0  # Default voltage magnitude
             to_bus_data = [b for b in new_buses if b[2] == new_arc[3]][1]
             end_bus_nums[to_bus_data[3]] = end_bus_nums[to_bus_data[3]] + 1 #add 1 to the last number
+            # Use the line's specified voltage (simple and clear)
+            base_voltage = float(new_arc[1])
+            @info "Creating to_bus: using line voltage $(base_voltage) kV"
             to_bus =
-                make_new_bus(end_bus_nums[to_bus_data[3]], to_bus_data, voltage_set_point)
-            @info "adding a new bus $(get_name(to_bus)), $(get_number(to_bus))"
+                make_new_bus(
+                    end_bus_nums[to_bus_data[3]],
+                    to_bus_data, 
+                    voltage_set_point,
+                    base_voltage,)
+
+            @info "adding a new bus $(get_name(to_bus)), $(get_number(to_bus)) with base voltage $(base_voltage) kV"
             add_component!(sys, to_bus)
         end
-        @assert get_base_voltage(from_bus) == get_base_voltage(to_bus)
+        # Handle base voltage mismatch if both buses exist
+        if from_bus_existed && to_bus_existed && get_base_voltage(from_bus) != get_base_voltage(to_bus)
+            intended_voltage = float(new_arc[1])  # Line's intended voltage
+            from_voltage = get_base_voltage(from_bus)
+            to_voltage = get_base_voltage(to_bus)
+            # Base voltage mismatch warning message: 
+            @warn "BASE VOLTAGE MISMATCH DETECTED"
+            @warn "Line: $(new_arc[2]) --> $(new_arc[3])"
+            @warn "from_bus '$(get_name(from_bus))': $(from_voltage) kV"
+            @warn "to_bus '$(get_name(to_bus))': $(to_voltage) kV" 
+            @warn "line expects: $(intended_voltage) kV"
+            
+            # Strategy: Modify the bus that doesn't match the intended voltage
+            if from_voltage == intended_voltage && to_voltage != intended_voltage
+                @info "✓ FIXING: Changing to_bus '$(get_name(to_bus))' from $(to_voltage) kV to $(intended_voltage) kV"
+                # Modify the to_bus to match the intended voltage
+                to_bus.base_voltage = intended_voltage
+            elseif to_voltage == intended_voltage && from_voltage != intended_voltage
+                @info "✓ FIXING: Changing from_bus '$(get_name(from_bus))' from $(from_voltage) kV to $(intended_voltage) kV"
+                # Modify the from_bus to match the intended voltage
+                from_bus.base_voltage = intended_voltage
+            else
+                # Neither matches intended voltage - use the intended voltage for both
+                @warn "Neither bus matches intended voltage - setting both to $(intended_voltage) kV"
+                @info "✓ FIXING: Changing from_bus '$(get_name(from_bus))' from $(from_voltage) kV to $(intended_voltage) kV"
+                @info "✓ FIXING: Changing to_bus '$(get_name(to_bus))' from $(to_voltage) kV to $(intended_voltage) kV"
+                from_bus.base_voltage = intended_voltage
+                to_bus.base_voltage = intended_voltage
+            end
+        else
+            # Log successful voltage matching
+            if from_bus_existed && to_bus_existed
+                # @info "✓ Base voltage match: $(get_name(from_bus)) <--> $(get_name(to_bus)) both at $(get_base_voltage(from_bus)) kV"
+            end
+        end
+        @assert get_base_voltage(from_bus) == get_base_voltage(to_bus) "Base voltage mismatch: from_bus=$(get_base_voltage(from_bus)), to_bus=$(get_base_voltage(to_bus)), from_bus_existed=$(from_bus_existed), to_bus_existed=$(to_bus_existed)"
         base_voltage = get_base_voltage(from_bus)
         data = line_params[base_voltage]
         get_ext(sys)["last_line"] += 1
@@ -223,34 +275,48 @@ function add_line!(sys, new_arc::Tuple)
             angle_limits = (-π / 4, π / 4),
         )
         add_component!(sys, new_line)
-    catch e
-        @error(e)
-    end
+    # catch e
+    #     @error(e)
+    # end
 end
 
 function add_transformer!(sys, new_arc)
     try
         from_bus = get_component(Bus, sys, new_arc[3])
         to_bus = get_component(Bus, sys, new_arc[4])
+        
+        # Remember which buses existed originally
+        from_bus_existed = !isnothing(from_bus)
+        to_bus_existed = !isnothing(to_bus)
+        
         if isnothing(from_bus)
-            voltage_set_point = isnothing(to_bus) ? 1.0 : get_magnitude(to_bus)
+            voltage_set_point = 1.0  # Default voltage magnitude
             from_bus_data = [b for b in new_buses if b[2] == new_arc[3]][1]
             end_bus_nums[from_bus_data[3]] = end_bus_nums[from_bus_data[3]] + 1 #add 1 to the last number
+            # For transformers, use the specified high-side voltage (first element)
+            base_voltage = float(new_arc[1])  # High-side voltage from transformer spec
             from_bus = make_new_bus(
                 end_bus_nums[from_bus_data[3]],
                 from_bus_data,
                 voltage_set_point,
+                base_voltage,
             )
-            @info "adding a new bus $(get_name(from_bus)), $(get_number(from_bus))"
+            @info "adding a new transformer from_bus $(get_name(from_bus)), $(get_number(from_bus)) with base voltage $base_voltage kV (high-side)"
             add_component!(sys, from_bus)
         end
         if isnothing(to_bus)
-            voltage_set_point = isnothing(from_bus) ? 1.0 : get_magnitude(from_bus)
+            voltage_set_point = 1.0  # Default voltage magnitude
             to_bus_data = [b for b in new_buses if b[2] == new_arc[4]][1]
             end_bus_nums[to_bus_data[3]] = end_bus_nums[to_bus_data[3]] + 1 #add 1 to the last number
-            to_bus =
-                make_new_bus(end_bus_nums[to_bus_data[3]], to_bus_data, voltage_set_point)
-            @info "adding a new bus $(get_name(to_bus)), $(get_number(to_bus))"
+            # For transformers, use the specified low-side voltage (second element)
+            base_voltage = float(new_arc[2])  # Low-side voltage from transformer spec
+            to_bus = make_new_bus(
+                end_bus_nums[to_bus_data[3]], 
+                to_bus_data, 
+                voltage_set_point,
+                base_voltage
+            )
+            @info "adding a new transformer to_bus $(get_name(to_bus)), $(get_number(to_bus)) with base voltage $base_voltage kV (low-side)"
             add_component!(sys, to_bus)
         end
         get_ext(sys)["last_line"] += 1
