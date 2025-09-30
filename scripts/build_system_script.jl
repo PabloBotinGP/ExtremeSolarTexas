@@ -730,8 +730,8 @@ to_json(sys, "post_thermal_sys.json", force = true)
 write_lines_geo_data(sys, "line_coords_modified")
 write_gen_buses_geo_data(sys, "bus_gens_coords_modified")
 
-# Finalize system for market simulation
-finalize_system(sys) 
+# Finalize system and prepare for simulation
+finalize_system(sys)  # This saves to "base_sys.json" 
 
 # =====================================================================================
 # SECTION 10: MARKET DATA GENERATION
@@ -741,10 +741,12 @@ finalize_system(sys)
 
 include("make_hour_ahead_data.jl")   # Create hour-ahead market system
 include("make_day_ahead_data.jl")    # Create day-ahead market system
+include("make_real_time_data.jl")    # Creates real-time market system
 
 # Export final market systems
 to_json(sys_DA, "sys_da.json", force = true)    # Day-ahead system
 to_json(sys_base, "sys_rt.json", force = true)  # Real-time system
+to_json(sys_RT, "sys_rt.json", force = true)      # Real-time system
 
 # collect(get_components(x-> get_number(x) == 5262, ACBus, sys_DA))
 
