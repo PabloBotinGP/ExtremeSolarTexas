@@ -733,7 +733,6 @@ write_gen_buses_geo_data(sys, "bus_gens_coords_modified")
 # Finalize system for market simulation
 finalize_system(sys) 
 
-
 # =====================================================================================
 # SECTION 10: MARKET DATA GENERATION
 # =====================================================================================
