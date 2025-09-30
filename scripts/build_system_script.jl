@@ -19,7 +19,6 @@ hydro = CSV.read(hydro_mapping, DataFrames.DataFrame)
 
 get_ext(sys)["added_power"] = 0.0
 
-
 # ####### Increase Q limits on all generators
 # thermal_gens = get_components(ThermalStandard, sys)
 # for i in thermal_gens
@@ -33,6 +32,7 @@ get_ext(sys)["added_power"] = 0.0
 # for i in hydro_gens
 #     set_reactive_power_limits!(i, (-5,5))
 # end
+
 ####### Add new PV ####
 add_line!(sys, (500, "PANHANDLE 2 0", "FRYE_SOLAR 0", 112))
 add_line!(sys, (500, "FRYE_SOLAR 0", "LAMESA 1", 161))
@@ -127,17 +127,17 @@ add_pv_plant!(sys, ("San Bernard Solar", "NEWGULF 1"))
 #res = solve_powerflow(ACPowerFlow(), sys)
 #check_pf_results(res) ? solve_powerflow(ACPowerFlow(), sys) : @error("PowerFlow Failed")
 line_mount_pleasant = collect(get_components(x -> get_from(get_arc(x)) == get_bus(sys, 8105)  && get_to(get_arc(x))== get_bus(sys, 8127), Line, sys))
-remove_component!(sys, line_mount_pleasant[1])
+safe_remove_component!(sys, line_mount_pleasant, "Mount Pleasant (8105-8127)")
 line_dike = collect(get_components(x -> get_from(get_arc(x)) == get_bus(sys, 8066)  && get_to(get_arc(x))== get_bus(sys, 8093), Line, sys))
-remove_component!(sys, line_dike[1])
+safe_remove_component!(sys, line_dike, "Dike (8066-8093)")
 add_line!(sys, (230, "MOUNT PLEASANT 2 0", "HOPKINS 1", 15))
 add_line!(sys, (230, "HOPKINS 1", "MOUNT PLEASANT 1 1", 15))
 add_pv_plant!(sys, ("Hopkins", "HOPKINS 1"))
-remove_component!(sys, get_component(FixedAdmittance, sys, "12"))
+safe_remove_component!(sys, [get_component(FixedAdmittance, sys, "12")], "FixedAdmittance: 12")
 #res = solve_powerflow(ACPowerFlow(), sys)
 #check_pf_results(res) ? solve_powerflow(ACPowerFlow(), sys) : @error("PowerFlow Failed")
 line_mount_vernon = collect(get_components(x -> get_from(get_arc(x)) == get_bus(sys, 8142)  && get_to(get_arc(x))== get_bus(sys, 8106), Line, sys))
-remove_component!(sys, line_mount_vernon[1])
+safe_remove_component!(sys, line_mount_vernon, "Mount Vernon (8142-8106)")
 add_line!(sys, (230, "IMPACT_SOLAR", "MOUNT PLEASANT 1 1", 13))
 add_line!(sys, (230, "MOUNT PLEASANT 2 0", "PINE_FOREST_SOLAR 1", 22))
 add_line!(sys, (230, "PINE_FOREST_SOLAR 1", "MOUNT VERNON 1", 5))

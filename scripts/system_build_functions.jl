@@ -17,6 +17,15 @@ using HDF5
 #using Plots
 using JSON
 
+# Helper function to safely remove components from collections
+function safe_remove_component!(sys, components, description)
+    try
+        remove_component!(sys, components[1])
+    catch
+        @warn "Trying to remove a non-existent component: $description"
+    end
+end
+
 function complete_lines_characteristic_impedance!(line_params, sys)
     z_c_data =
         Dict(115.0 => Float64[], 161.0 => Float64[], 230.0 => Float64[], 500.0 => Float64[])
