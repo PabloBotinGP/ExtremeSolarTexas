@@ -1,3 +1,14 @@
+# =====================================================================================
+# EXTREME SOLAR TEXAS POWER SYSTEM BUILDER
+# =====================================================================================
+# This script transforms the base TAMU ACTIVSg2000 synthetic Texas grid into a 
+# detailed renewable energy system with extensive solar, wind, and hydro additions
+# for studying extreme solar penetration scenarios.
+# =====================================================================================
+
+# =====================================================================================
+# SECTION 1: SETUP AND INITIALIZATION
+# =====================================================================================
 using PowerFlows
 include("file_pointers.jl")
 include("system_build_functions.jl")
@@ -6,7 +17,7 @@ include("system_build_functions.jl")
 
 configure_logging(file_level = Logging.Info, console_level = Logging.Info)
 
-
+# Load base system and initialize
 sys = System(TAMU_matpower_file)
 add_bus_coords(sys, TAMU_shp_file)
 # write_lines_geo_data(sys, "line_coords_original")
@@ -19,19 +30,15 @@ hydro = CSV.read(hydro_mapping, DataFrames.DataFrame)
 
 get_ext(sys)["added_power"] = 0.0
 
-# ####### Increase Q limits on all generators
-# thermal_gens = get_components(ThermalStandard, sys)
-# for i in thermal_gens
-#     set_reactive_power_limits!(i, (-5,5))
-# end
-# ren_gens = get_components(RenewableDispatch, sys)
-# for i in ren_gens
-#     set_reactive_power_limits!(i, (-5,5))
-# end
-# hydro_gens = get_components(HydroDispatch, sys)
-# for i in hydro_gens
-#     set_reactive_power_limits!(i, (-5,5))
-# end
+# =====================================================================================
+# SECTION 2: MASSIVE SOLAR PLANT ADDITION (~200+ PLANTS)
+# =====================================================================================
+# Pattern for each solar installation:
+# 1. Remove existing transmission lines (if needed)
+# 2. Add new transmission lines at appropriate voltage levels
+# 3. Add transformers for voltage conversion
+# 4. Add the solar PV plant
+# =====================================================================================
 
 ####### Add new PV ####
 add_line!(sys, (500, "PANHANDLE 2 0", "FRYE_SOLAR 0", 112))
@@ -558,6 +565,13 @@ line_drop31 = collect(get_components(x -> get_from(get_arc(x)) == get_bus(sys, 7
 remove_component!(sys, line_drop31[1])
 #res = solve_powerflow(ACPowerFlow(), sys)
 #check_pf_results(res) ? solve_powerflow(ACPowerFlow(), sys) : @error("PowerFlow Failed")
+
+# =====================================================================================
+# SECTION 3: HYDROELECTRIC PLANT ADDITION
+# =====================================================================================
+# Add major Texas hydro facilities
+# =====================================================================================
+
 add_line!(sys, (230, "DEL RIO 0", "AMISTAD_HYDRO 0", 45))
 get_ext(get_component(Bus, sys, "AMISTAD_HYDRO 0"))["x"] = -101.056020
 get_ext(get_component(Bus, sys, "AMISTAD_HYDRO 0"))["y"] = 29.449520
@@ -591,6 +605,13 @@ add_hydro_plant!(sys, ("Whitney Dam 2", "WHITNEY DAM 2"))
 #res = solve_powerflow(ACPowerFlow(), sys)
 #check_pf_results(res) ? solve_powerflow(ACPowerFlow(), sys) : @error("PowerFlow Failed")
 
+
+# =====================================================================================
+# SECTION 4: EXISTING GENERATOR REPLACEMENT WITH SOLAR
+# =====================================================================================
+# Replace existing thermal generators with solar plants at the same locations
+# =====================================================================================
+
 ################ Substitute Existing PV with new PV ###################
 add_pv_plant!(sys, ("Piano Solar", "BRACKETTVILLE 1 1")) # gen-110
 add_pv_plant!(sys, ("Error Solar", "BIG SPRING 6 1")) # gen -22
@@ -617,6 +638,14 @@ add_pv_plant!(sys, ("River Solar", "PRESIDIO 1 1"))
 #res = solve_powerflow(ACPowerFlow(), sys)
 #check_pf_results(res) && solve_ac_powerflow!(sys)
 
+
+# =====================================================================================
+# SECTION 5: GEOSPATIAL DATA PROCESSING
+# =====================================================================================
+# Assign GPS coordinates to all system components for mapping and analysis
+# =====================================================================================
+
+# Assign real-world GPS coordinates to solar plant buses
 for r in eachrow(solar)
     plant = get_component(RenewableDispatch, sys, r.site_ids)
     isnothing(plant) && continue
@@ -645,6 +674,13 @@ for t in get_components(TapTransformer, sys)
     end
 end
 
+
+# =====================================================================================
+# SECTION 6: AREA NAMING AND ORGANIZATION
+# =====================================================================================
+# Rename system areas for better organization
+# =====================================================================================
+
 # Renaming of areas
 for area_no in 1:8
     area_number_as_text = string(area_no)
@@ -654,39 +690,62 @@ for area_no in 1:8
     area.internal.ext = Dict("area_number_as_text"=> area_number_as_text)
 end
 
-
-
+# Save intermediate system state
 to_json(sys, "intermediate_sys.json", force = true)
+
+# =====================================================================================
+# SECTION 7: TIME SERIES DATA PROCESSING
+# =====================================================================================
+# Add realistic time-varying data for loads, wind, and hydro resources
+# =====================================================================================
+
+# Load the intermediate system state.
 sys = System("intermediate_sys.json")
 
-include("load_processing.jl")
-include("wind_processing.jl")
-include("hydro_processing.jl")
-to_json(sys, "pre_thermal_sys.json", force = true)
+include("load_processing.jl")      # Add electrical load time series
+include("wind_processing.jl")      # Add wind generation profiles
+include("hydro_processing.jl")     # Add hydro availability data
+to_json(sys, "pre_thermal_sys.json", force = true) # Save pre-thermal system state
+
+# =====================================================================================
+# SECTION 8: THERMAL UNIT PROCESSING
+# =====================================================================================
+# Replace generic thermal units with detailed models using real ERCOT operational data
+# Includes economics.
+# =====================================================================================
 
 sys = System("pre_thermal_sys.json")
-include("incrementalpiecewise.jl")
-include("thermal_processing.jl")
-
-
-configure_logging(file_level = Logging.Info, console_level = Logging.Info)
-
-
-to_json(sys, "intermediate_sys.json", force = true)
+include("thermal_processing.jl")     # Detailed thermal plant parameters
 to_json(sys, "post_thermal_sys.json", force = true)
 
-# include("add_services.jl")
+# =====================================================================================
+# SECTION 9: SYSTEM FINALIZATION AND OUTPUT GENERATION
+# =====================================================================================
+# Finalize the system and create different market timeframe files
+# =====================================================================================
 
+# include("add_services.jl")  # Optional: Add ancillary services
+
+# Export geographic data for visualization
 write_lines_geo_data(sys, "line_coords_modified")
 write_gen_buses_geo_data(sys, "bus_gens_coords_modified")
 
+# Finalize system for market simulation
 finalize_system(sys) 
 
-include("make_hour_ahead_data.jl")
-include("make_day_ahead_data.jl")
 
-to_json(sys_DA, "sys_da.json", force = true)
-to_json(sys_base, "sys_rt.json", force = true)
+# =====================================================================================
+# SECTION 10: MARKET DATA GENERATION
+# =====================================================================================
+# Create separate system files for different electricity market timeframes
+# =====================================================================================
+
+include("make_hour_ahead_data.jl")   # Create hour-ahead market system
+include("make_day_ahead_data.jl")    # Create day-ahead market system
+
+# Export final market systems
+to_json(sys_DA, "sys_da.json", force = true)    # Day-ahead system
+to_json(sys_base, "sys_rt.json", force = true)  # Real-time system
 
 # collect(get_components(x-> get_number(x) == 5262, ACBus, sys_DA))
 
