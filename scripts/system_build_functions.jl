@@ -17,7 +17,6 @@ using HDF5
 #using Plots
 using JSON
 
-
 function complete_lines_characteristic_impedance!(line_params, sys)
     z_c_data =
         Dict(115.0 => Float64[], 161.0 => Float64[], 230.0 => Float64[], 500.0 => Float64[])
@@ -149,17 +148,26 @@ end
 #     end
 # end
 
-function make_new_bus(bus_numer, bus_data, voltage_set_point)
-    return ACBus(
-        number = bus_numer,
+function make_new_bus(
+    bus_number::Int,
+    bus_data::Tuple{Int, String, Int, ACBusTypes},
+    voltage_set_point::Float64,
+)
+    return PowerSystems.ACBus(;
+        number = bus_number,
         name = bus_data[2],
-        bustype = bus_data[4],
-        angle = 0.01,
+        available = true,                      
+        bustype = bus_data[4],                
+        angle = 0.01,                          
         magnitude = voltage_set_point,
-        voltage_limits = (min = 0.9, max = 1.1),
-        base_voltage = bus_data[1],
+        voltage_limits = (min=0.9, max=1.1),            
+        # base_voltage = float(bus_data[3]), # for testing purposes.
+        base_voltage = bus_data[3],
+        # area = nothing, # for testing purposes.
         area = get_component(Area, sys, "$(Int(bus_data[3]/1000))"),
         load_zone = nothing,
+        ext = Dict{String,Any}(),
+        internal = PowerSystems.InfrastructureSystems.InfrastructureSystemsInternal(),
     )
 end
 
