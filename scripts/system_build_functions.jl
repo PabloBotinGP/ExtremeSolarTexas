@@ -154,8 +154,7 @@ function add_line!(sys, new_arc::Tuple)
         if isnothing(from_bus)
             voltage_set_point = isnothing(to_bus) ? 1.0 : get_magnitude(to_bus)  # Default voltage magnitude
             from_bus_data = [b for b in new_buses if b[2] == new_arc[2]][1] # Get bus data from new_buses array.
-            # Use the line's specified voltage (simple and clear).
-            # Alternative would be to use the other bus voltage if it exists. But why, if we are defining the voltage in the line. 
+            # Use the line's specified voltage.
             base_voltage = float(new_arc[1])
             end_bus_nums[from_bus_data[3]] = end_bus_nums[from_bus_data[3]] + 1 # Increment using area number from bus_data
             @info "Creating from_bus: using line voltage $(base_voltage) kV"
@@ -209,7 +208,7 @@ function add_line!(sys, new_arc::Tuple)
 end
 
 function add_transformer!(sys, new_arc)
-    try
+    # try
         from_bus = get_component(Bus, sys, new_arc[3])
         to_bus = get_component(Bus, sys, new_arc[4])
         
@@ -260,14 +259,15 @@ function add_transformer!(sys, new_arc)
             arc = Arc(from_bus, to_bus),
             r = data.impedance[2] / data.xr_ratio[2],
             x = data.impedance[2],
+            base_power = 100.0,
             primary_shunt = 0.0,
             tap = 1.0,
             rating = 2000.0,
         )
         add_component!(sys, new_transformer)
-    catch e
-        @error(e)
-    end
+    # catch e
+    #     @error(e)
+    # end
 end
 
 function add_pv_plant!(sys, plant::Tuple)
