@@ -13,9 +13,44 @@ using ProgressMeter
 const PSY = PowerSystems
 using JuMP
 using Xpress
+using Libdl
 using HDF5
 #using Plots
 using JSON
+
+# Ensure Xpress native library is available early so long runs fail fast with a clear message.
+function ensure_xpress_lib(; throw_on_fail::Bool = true)
+    try
+        Libdl.dlopen("libxprs.dylib")
+        @info "libxprs.dylib is available on the dynamic loader path"
+        return true
+    catch _e
+        candidate_paths = [
+            "/Applications/FICO Xpress/Xpress Workbench.app/Contents/Resources/xpressmp/lib/libxprs.dylib",
+            joinpath(homedir(), "Applications", "FICO_Xpress_Install", "lib", "libxprs.dylib"),
+            "/usr/local/lib/libxprs.dylib",
+            "/opt/xpress/lib/libxprs.dylib",
+        ]
+        for p in candidate_paths
+            if isfile(p)
+                try
+                    Libdl.dlopen(p)
+                    @info "Loaded libxprs.dylib from: $p"
+                    return true
+                catch e2
+                    @warn "Found libxprs at $p but failed to load: $e2"
+                end
+            end
+        end
+        msg = "libxprs.dylib could not be loaded.\n  - Ensure FICO Xpress is installed.\n  - Add the directory containing libxprs.dylib to DYLD_LIBRARY_PATH, e.g. export DYLD_LIBRARY_PATH=\"/path/to/xpress/lib:\\$DYLD_LIBRARY_PATH\"\n  - Or create a symlink to /usr/local/lib: sudo ln -s /path/to/libxprs.dylib /usr/local/lib/libxprs.dylib\n  - On Apple Silicon, if Xpress is x86_64 only, run Julia under Rosetta or install an x86_64 Julia.\n  - Ensure a valid Xpress license is configured."
+        @error(msg)
+        throw_on_fail && throw(ErrorException(msg))
+        return false
+    end
+end
+
+# Run the check immediately so scripts abort early if Xpress isn't available.
+ensure_xpress_lib()
 
 # Helper function to safely remove components from collections
 function safe_remove_component!(sys, components, description)
@@ -1072,7 +1107,13 @@ function get_sced_data(file_name, name)
 end
 
 function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
-    m = Model(Xpress.Optimizer; )
+    try
+        m = Model(Xpress.Optimizer; )
+    catch e
+        @error "Failed to instantiate Xpress optimizer: $e"
+        @error "Hint: the Xpress shared library (libxprs.dylib) was not found or could not be loaded.\n  - Ensure FICO Xpress is installed on this machine.\n  - Make the directory containing libxprs.dylib visible to the dynamic loader (for example by adding it to DYLD_LIBRARY_PATH or creating a symlink in /usr/local/lib).\n  - On Apple Silicon (arm64) check for architecture mismatch: Xpress may be x86_64 only; run Julia under Rosetta or install an x64 Julia if needed.\n  - Ensure a valid Xpress license is available."
+        rethrow(e)
+    end
     set_optimizer_attribute(m, "XPRS_MAXTIME", 10)
     #JuMP.set_silent(m)
     n_bp = length(price)
@@ -1113,7 +1154,13 @@ function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
 end
 
 function get_median_quadratic_model(gen, price, quad_term::Bool = true)
-    m = Model(Xpress.Optimizer)
+    try
+        m = Model(Xpress.Optimizer)
+    catch e
+        @error "Failed to instantiate Xpress optimizer: $e"
+        @error "Hint: the Xpress shared library (libxprs.dylib) was not found or could not be loaded.\n  - Ensure FICO Xpress is installed on this machine.\n  - Make the directory containing libxprs.dylib visible to the dynamic loader (for example by adding it to DYLD_LIBRARY_PATH or creating a symlink in /usr/local/lib).\n  - On Apple Silicon (arm64) check for architecture mismatch: Xpress may be x86_64 only; run Julia under Rosetta or install an x64 Julia if needed.\n  - Ensure a valid Xpress license is available."
+        rethrow(e)
+    end
     set_optimizer_attribute(m, "XPRS_MAXTIME", 5)
     #JuMP.set_silent(m)
     n_bp = length(price)

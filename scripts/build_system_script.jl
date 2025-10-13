@@ -749,6 +749,3 @@ to_json(sys_base, "sys_rt.json", force = true)  # Real-time system
 to_json(sys_RT, "sys_rt.json", force = true)      # Real-time system
 
 # collect(get_components(x-> get_number(x) == 5262, ACBus, sys_DA))
-
-
-
