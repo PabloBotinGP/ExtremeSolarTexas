@@ -857,10 +857,10 @@ function make_thermal_gen(
 	set_operation_cost!(temp_gen, op_cost)
 	start_up, no_load = start_up_no_load(sced_data)
         if no_load == -99
-            _, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL)
+            _, no_load, variable_cost = get_cost_data_from_gen(original_gen, name, LSL, HSL)
         end
     else
-        start_up, no_load, variable_cost = get_cost_data_from_gen(gen, name, LSL, HSL)
+        start_up, no_load, variable_cost = get_cost_data_from_gen(original_gen, name, LSL, HSL)
     end
     set_start_up!(op_cost, start_up)
     set_shut_down!(op_cost, 0.2 * start_up.hot)
