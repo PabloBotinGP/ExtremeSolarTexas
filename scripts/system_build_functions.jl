@@ -1107,14 +1107,15 @@ function get_sced_data(file_name, name)
 end
 
 function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
+    local m  # Declare m in function scope
     try
         m = Model(Xpress.Optimizer; )
+        set_optimizer_attribute(m, "XPRS_MAXTIME", 10)
     catch e
         @error "Failed to instantiate Xpress optimizer: $e"
         @error "Hint: the Xpress shared library (libxprs.dylib) was not found or could not be loaded.\n  - Ensure FICO Xpress is installed on this machine.\n  - Make the directory containing libxprs.dylib visible to the dynamic loader (for example by adding it to DYLD_LIBRARY_PATH or creating a symlink in /usr/local/lib).\n  - On Apple Silicon (arm64) check for architecture mismatch: Xpress may be x86_64 only; run Julia under Rosetta or install an x64 Julia if needed.\n  - Ensure a valid Xpress license is available."
         rethrow(e)
     end
-    set_optimizer_attribute(m, "XPRS_MAXTIME", 10)
     #JuMP.set_silent(m)
     n_bp = length(price)
     @variable(m, var_price[1:n_bp] >= 0)
@@ -1154,14 +1155,15 @@ function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
 end
 
 function get_median_quadratic_model(gen, price, quad_term::Bool = true)
+    local m  # Declare m in function scope
     try
         m = Model(Xpress.Optimizer)
+        set_optimizer_attribute(m, "XPRS_MAXTIME", 5)
     catch e
         @error "Failed to instantiate Xpress optimizer: $e"
         @error "Hint: the Xpress shared library (libxprs.dylib) was not found or could not be loaded.\n  - Ensure FICO Xpress is installed on this machine.\n  - Make the directory containing libxprs.dylib visible to the dynamic loader (for example by adding it to DYLD_LIBRARY_PATH or creating a symlink in /usr/local/lib).\n  - On Apple Silicon (arm64) check for architecture mismatch: Xpress may be x86_64 only; run Julia under Rosetta or install an x64 Julia if needed.\n  - Ensure a valid Xpress license is available."
         rethrow(e)
     end
-    set_optimizer_attribute(m, "XPRS_MAXTIME", 5)
     #JuMP.set_silent(m)
     n_bp = length(price)
     @variable(m, var_price[1:n_bp] >= 0)
