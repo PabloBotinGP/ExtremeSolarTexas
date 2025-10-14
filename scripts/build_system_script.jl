@@ -9,6 +9,8 @@
 # =====================================================================================
 # SECTION 1: SETUP AND INITIALIZATION
 # =====================================================================================
+@info "Active environment: $(Base.active_project())"
+
 using PowerFlows
 include("file_pointers.jl")
 include("system_build_functions.jl")
