@@ -144,8 +144,12 @@ for ((name, T), ts) in reserve_map
         Deterministic(name = "requirement", resolution = da_resolution, data = day_ahead_forecast,
         scaling_factor_multiplier = get_requirement)
     res = get_component(T, sys_base, name)
-    set_requirement!(res, peak/100)
-    add_time_series!(sys_base, res, forecast_data)
+    if res !== nothing  # Only add time series if the service exists
+        set_requirement!(res, peak/100)
+        add_time_series!(sys_base, res, forecast_data)
+    else
+        @warn "Reserve service $name not found in system - skipping (services may not have been added)"
+    end
 end
 
 sys_DA = deepcopy(sys_base)
