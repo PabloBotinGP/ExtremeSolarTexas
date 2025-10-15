@@ -726,7 +726,7 @@ to_json(sys, "post_thermal_sys.json", force = true)
 # Finalize the system and create different market timeframe files
 # =====================================================================================
 
-# include("add_services.jl")  # Optional: Add ancillary services
+include("add_services.jl")  # Add ancillary services (reserves)
 
 # Export geographic data for visualization
 write_lines_geo_data(sys, "line_coords_modified")

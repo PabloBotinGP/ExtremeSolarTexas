@@ -180,4 +180,76 @@ Applied to both:
 
 ---
 
+#### Error #5: Missing Reserve Services in System
+```
+ERROR: LoadError: MethodError: no method matching set_requirement!(::Nothing, ::Float64)
+The function `set_requirement!` exists, but no method is defined for this combination of argument types.
+
+Closest candidates are:
+  set_requirement!(::ConstantReserveNonSpinning, ::Any)
+  set_requirement!(::VariableReserveNonSpinning, ::Any)
+  set_requirement!(::ConstantReserve, ::Any)
+  ...
+
+Stacktrace:
+  [1] top-level scope
+    @ ~/Documents/GPAC/Models/ExtremeSolarTexas/scripts/make_day_ahead_data.jl:147
+  [2] include(mapexpr::Function, mod::Module, _path::String)
+    @ Base ./Base.jl:307
+  [3] top-level scope
+    @ ~/Documents/GPAC/Models/ExtremeSolarTexas/restart_from_finalize.jl:26
+```
+
+#### Impact
+- **Affected components:** Day-ahead market system creation, reserve time series assignment
+- **When triggered:** When `make_day_ahead_data.jl` attempts to add reserve time series (REG_UP, REG_DN, SPIN, NONSPIN)
+- **Result:** Script crashes during market data generation before solar/load time series can be added
+
+#### Root Cause
+The `make_day_ahead_data.jl` script (lines 133-148) attempts to add time series data to reserve Service objects:
+```julia
+res = get_component(T, sys_base, name)
+set_requirement!(res, peak/100)  # Crashes here when res is Nothing
+```
+
+However, the reserve services don't exist in the system because `add_services.jl` is commented out in `build_system_script.jl` (line 729):
+```julia
+# include("add_services.jl")  # Optional: Add ancillary services
+```
+
+When `get_component()` returns `Nothing` (service not found), calling `set_requirement!(Nothing, ...)` triggers a type error.
+
+**Services expected but not found:**
+- `REG_UP` (VariableReserve{ReserveUp})
+- `REG_DN` (VariableReserve{ReserveDown})
+- `SPIN` (VariableReserve{ReserveUp})
+- `NONSPIN` (VariableReserveNonSpinning)
+
+#### Fix Applied
+**File:** `scripts/make_day_ahead_data.jl`, lines 133-151
+
+**Solution:** Add existence check before attempting to set reserve requirements
+
+```julia
+for ((name, T), ts) in reserve_map
+    # ... forecast data creation ...
+    res = get_component(T, sys_base, name)
+    if res !== nothing  # Only add time series if the service exists
+        set_requirement!(res, peak/100)
+        add_time_series!(sys_base, res, forecast_data)
+    else
+        @warn "Reserve service $name not found in system - skipping (services may not have been added)"
+    end
+end
+```
+
+This allows the script to continue gracefully when ancillary services are not included in the system build.
+
+#### Questions for Collaboration
+- **Why are services commented out?** Is this intentional for the current model scope?
+- **Impact of missing services:** What simulation capabilities are lost without ancillary services?
+- **Should services be enabled?** Or should the reserve time series code be removed entirely from `make_day_ahead_data.jl`?
+
+---
+
 ```

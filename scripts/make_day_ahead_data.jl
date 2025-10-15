@@ -280,7 +280,7 @@ to_json(sys_solar_scenarios_31, "DA_sys_31_scenarios.json", force = true)
 ############################ Add Scenario Data of UC #############################
 sys_solar_scenarios_84 = deepcopy(sys_base)
 PSY.IS.assign_new_uuid!(sys_solar_scenarios_84)
-ts_data = joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts -- 84 member 30 horizon", "Day ahead solar 84 trajectory mean forecasts")
+ts_data = joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts -- 84 member 30 h horizon", "Day ahead solar 84 trajectory mean forecasts")
 file_names = readdir(ts_data)
 for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableGen, sys_solar_scenarios_84)
     !get_available(gen) && continue
@@ -330,7 +330,7 @@ for g in get_components(RenewableGen, sys_solar_scenarios_84)
     end
 end
 
-area_forecast_ = h5open(joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts -- 84 member 30 horizon", "day_ahead_ERCOT132_84_trajectories.h5"), "r") do file
+area_forecast_ = h5open(joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts -- 84 member 30 h horizon", "day_ahead_ERCOT132_84_trajectories.h5"), "r") do file
     return read(file, "Power")
 end
 area_forecast = hcat(area_forecast_, area_forecast_[:, 1:6, :])
