@@ -743,11 +743,10 @@ finalize_system(sys)  # This saves to "base_sys.json"
 
 include("make_hour_ahead_data.jl")   # Create hour-ahead market system
 include("make_day_ahead_data.jl")    # Create day-ahead market system
-include("make_real_time_data.jl")    # Creates real-time market system
+# include("make_real_time_data.jl")  # Skipped: requires quantile solar data not in repo
 
 # Export final market systems
 to_json(sys_DA, "sys_da.json", force = true)    # Day-ahead system
-to_json(sys_base, "sys_rt.json", force = true)  # Real-time system
-to_json(sys_RT, "sys_rt.json", force = true)      # Real-time system
+# to_json(sys_RT, "sys_rt.json", force = true)  # Skipped: RT system not created
 
 # collect(get_components(x-> get_number(x) == 5262, ACBus, sys_DA))
