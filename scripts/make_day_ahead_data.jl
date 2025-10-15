@@ -203,13 +203,13 @@ end
 
 to_json(sys_DA, "may_19_sys_DA.json", force = true)
 
-to_json(sys_DA, "/Users/acasavan/EST_data/texas_data/DA_sys.json", force = true)
+to_json(sys_DA, "DA_sys.json", force = true)
 
 ############################ Add Scenario Data of UC #############################
 
 sys_solar_scenarios_31 = deepcopy(sys_base)
 PSY.IS.assign_new_uuid!(sys_solar_scenarios_31)
-ts_data = "C:/Users/acasavan/EST_data/texas_data/Trajectory forecasts -- 31 member 36 h horizon/Day ahead solar 31 trajectory mean forecasts"
+ts_data = joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts -- 31 member 36 h horizon", "Day ahead solar 31 trajectory mean forecasts")
 file_names = readdir(ts_data)
 for gen in get_components( x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableDispatch, sys_solar_scenarios_31)
     !get_available(gen) && continue
@@ -270,12 +270,12 @@ scenario_forecast_data_31 = Scenarios(
 )
 add_time_series!(sys_solar_scenarios_31, get_component(Area, sys_solar_scenarios_31, "FarWest"), scenario_forecast_data_31)
 
-to_json(sys_solar_scenarios_31, "/Users/acasavan/EST_data/texas_data/DA_sys_31_scenarios.json", force = true)
+to_json(sys_solar_scenarios_31, "DA_sys_31_scenarios.json", force = true)
 
 ############################ Add Scenario Data of UC #############################
 sys_solar_scenarios_84 = deepcopy(sys_base)
 PSY.IS.assign_new_uuid!(sys_solar_scenarios_84)
-ts_data = "C:/Users/acasavan/GitHub_Repos/ExtremeSolarTexas/scripts/input_data/Solar/Trajectory forecasts -- 84 member 30 horizon/Day ahead solar 84 trajectory mean forecasts/"
+ts_data = joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts -- 84 member 30 horizon", "Day ahead solar 84 trajectory mean forecasts")
 file_names = readdir(ts_data)
 for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableGen, sys_solar_scenarios_84)
     !get_available(gen) && continue
@@ -325,7 +325,7 @@ for g in get_components(RenewableGen, sys_solar_scenarios_84)
     end
 end
 
-area_forecast_ = h5open("C:/Users/acasavan/GitHub_Repos/ExtremeSolarTexas/scripts/input_data/Solar/Trajectory forecasts -- 84 member 30 horizon/day_ahead_ERCOT132_84_trajectories.h5", "r") do file
+area_forecast_ = h5open(joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts -- 84 member 30 horizon", "day_ahead_ERCOT132_84_trajectories.h5"), "r") do file
     return read(file, "Power")
 end
 area_forecast = hcat(area_forecast_, area_forecast_[:, 1:6, :])
