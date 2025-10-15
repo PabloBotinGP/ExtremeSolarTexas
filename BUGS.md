@@ -11,10 +11,6 @@ Stacktrace pointing to line 863 in system_build_functions.jl
 
 #### Root Cause
 In the `make_thermal_gen()` function, the else branch for generators without SCED data called:
-```julia
-get_cost_data_from_gen(gen, name, LSL, HSL)  # 'gen' undefined!
-```
-
 But the function parameter is named `original_gen`, not `gen`.
 
 #### Fix Applied
@@ -127,3 +123,61 @@ PowerSystems automatically deletes intermediate companion files when using `to_j
 **Solution:** Check file existence before deletion to handle PowerSystems' automatic cleanup gracefully.
 
 ---
+
+#### Error #4: Type Error in Scenario Time Series Construction
+```
+ERROR: LoadError: TypeError: in keyword argument data, expected DataStructures.SortedDict{DateTime, Matrix{Float64}}, got a value of type Dict{DateTime, Matrix{Float64}}
+Stacktrace:
+  [1] top-level scope
+    @ ~/Documents/GPAC/Models/ExtremeSolarTexas/scripts/make_day_ahead_data.jl:265
+  [2] include(mapexpr::Function, mod::Module, _path::String)
+    @ Base ./Base.jl:307
+  [3] top-level scope
+    @ ~/Documents/GPAC/Models/ExtremeSolarTexas/restart_from_finalize.jl:7
+```
+
+#### Impact
+- **Affected components:** Day-ahead scenario system creation (31-scenario and 84-scenario solar trajectory forecasts)
+- **When triggered:** When adding scenario-based time series data to Area components
+- **Result:** Script crashes during market data generation, preventing creation of scenario-based systems
+
+#### Root Cause
+The `Scenarios()` constructor in PowerSystems requires time series data to be provided as a `SortedDict` to ensure chronological ordering of timestamps. The code was using a regular `Dict{DateTime, Matrix{Float64}}` instead of `SortedDict{DateTime, Matrix{Float64}}`.
+
+**Two locations affected:**
+1. Line 261: 31-scenario solar trajectory system
+2. Line 334: 84-scenario solar trajectory system
+
+Both created dictionaries with:
+```julia
+hour_ahead_forecast = Dict{Dates.DateTime, Matrix{Float64}}()
+```
+
+PowerSystems requires sorted temporal data for validation and proper time series operations.
+
+#### Fix Applied
+**File:** `scripts/make_day_ahead_data.jl`
+
+**Solution 1:** Install and import SortedDict from DataStructures package
+```julia
+using PowerSystems
+using DataStructures: SortedDict  # Added import
+const PSY = PowerSystems
+```
+
+**Solution 2:** Use SortedDict for scenario time series data (both occurrences)
+```julia
+# Changed from:
+hour_ahead_forecast = Dict{Dates.DateTime, Matrix{Float64}}()
+
+# Changed to:
+hour_ahead_forecast = SortedDict{Dates.DateTime, Matrix{Float64}}()
+```
+
+Applied to both:
+- 31-scenario system (line ~261)
+- 84-scenario system (line ~334)
+
+---
+
+```

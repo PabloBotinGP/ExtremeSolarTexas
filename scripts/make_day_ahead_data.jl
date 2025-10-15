@@ -1,4 +1,5 @@
 using PowerSystems
+using DataStructures: SortedDict
 const PSY = PowerSystems
 
 include("file_pointers.jl")
@@ -257,7 +258,7 @@ area_forecast = h5open("scripts/input_data/Solar/Trajectory forecasts -- 31 memb
     return read(file, "Power")
 end
 
-hour_ahead_forecast = Dict{Dates.DateTime, Matrix{Float64}}()
+hour_ahead_forecast = SortedDict{Dates.DateTime, Matrix{Float64}}()
 for ix in 1:day_count
     hour_ahead_forecast[initial_time + (ix - 1) * da_interval] = area_forecast[ix, :, :]
 end
@@ -330,7 +331,7 @@ area_forecast_ = h5open(joinpath(SOURCE_DATA_DIR, "Solar", "Trajectory forecasts
 end
 area_forecast = hcat(area_forecast_, area_forecast_[:, 1:6, :])
 
-hour_ahead_forecast = Dict{Dates.DateTime, Matrix{Float64}}()
+hour_ahead_forecast = SortedDict{Dates.DateTime, Matrix{Float64}}()
 for ix in 1:day_count
     hour_ahead_forecast[initial_time + (ix - 1) * da_interval] = area_forecast[ix, :, :]
 end
