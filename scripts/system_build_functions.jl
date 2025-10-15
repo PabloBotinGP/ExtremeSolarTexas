@@ -1259,8 +1259,9 @@ function finalize_system(sys)
     to_json(sys, "base_sys.json"; force = true)
     sys = System("base_sys.json")  # Why load again?  
     if isa(sys, System) # Remove intermediate files. 
-        rm("intermediate_sys.json")
-        rm("intermediate_sys_time_series_storage.h5")
-        rm("intermediate_sys_validation_descriptors.json")
+        # Only delete files that actually exist (weren't auto-cleaned by PowerSystems)
+        isfile("intermediate_sys.json") && rm("intermediate_sys.json")
+        isfile("intermediate_sys_time_series_storage.h5") && rm("intermediate_sys_time_series_storage.h5")
+        isfile("intermediate_sys_validation_descriptors.json") && rm("intermediate_sys_validation_descriptors.json")
     end
 end
