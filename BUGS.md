@@ -96,3 +96,34 @@ function get_mean_quadratic_model(gen, price, quad_term::Bool = true)
 Same fix applied to `get_median_quadratic_model()`.
 
 ---
+
+#### Error #3: File Deletion Error in finalize_system()
+```
+ERROR: LoadError: IOError: unlink("intermediate_sys_time_series_storage.h5"): no such file or directory (ENOENT)
+Stacktrace:
+  [1] rm(path::String; force::Bool, recursive::Bool, allow_delayed_delete::Bool)
+    @ Base.Filesystem ./file.jl:285
+  [2] finalize_system(sys::System)
+    @ Main ~/Documents/GPAC/Models/ExtremeSolarTexas/scripts/system_build_functions.jl:1263
+  [3] top-level scope
+    @ ~/Documents/GPAC/Models/ExtremeSolarTexas/scripts/build_system_script.jl:736
+```
+
+#### Impact
+- **Affected components:** System finalization step at end of build_system_script.jl
+- **When triggered:** After all processing complete, when attempting final cleanup
+- **Result:** Script crashes, preventing creation of market timeframe files.
+
+#### Root Cause
+PowerSystems automatically deletes intermediate companion files when using `to_json(sys, "filename.json", force = true)` and creating new system files. The workflow:
+1. Line 696: `to_json(sys, "intermediate_sys.json", force = true)` creates intermediate_sys.json + .h5 + _validation_descriptors.json
+2. Line 710: `to_json(sys, "pre_thermal_sys.json", force = true)` creates new files; PowerSystems auto-deletes old intermediate_sys.* files
+3. Line 721: `to_json(sys, "post_thermal_sys.json", force = true)` continues cleanup
+4. Line 736: `finalize_system()` tries to manually delete already-deleted files → crash
+
+#### Fix Applied
+**File:** `scripts/system_build_functions.jl`, function `finalize_system()`
+
+**Solution:** Check file existence before deletion to handle PowerSystems' automatic cleanup gracefully.
+
+---
