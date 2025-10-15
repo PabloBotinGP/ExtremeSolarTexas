@@ -348,4 +348,4 @@ scenario_forecast_data_84 = Scenarios(
 )
 add_time_series!(sys_solar_scenarios_84, get_component(Area, sys_solar_scenarios_84, "FarWest"), scenario_forecast_data_84)
 
-to_json(sys_solar_scenarios_84, "/scripts/jsons/DA_sys_84_scenarios.json", force = true)
+to_json(sys_solar_scenarios_84, "DA_sys_84_scenarios.json", force = true)
