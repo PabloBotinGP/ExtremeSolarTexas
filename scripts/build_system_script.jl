@@ -747,6 +747,5 @@ include("make_day_ahead_data.jl")    # Create day-ahead market system
 
 # Export final market systems
 to_json(sys_DA, "sys_da.json", force = true)    # Day-ahead system
+to_json(sys_HA, "sys_ha.json", force = true)    # Hour-ahead system
 # to_json(sys_RT, "sys_rt.json", force = true)  # Skipped: RT system not created
-
-# collect(get_components(x-> get_number(x) == 5262, ACBus, sys_DA))
