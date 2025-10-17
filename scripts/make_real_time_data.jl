@@ -95,7 +95,7 @@ end
 # power_output = h5open(joinpath("/Volumes/VM_WIN/Quantile data", file_name), "r") do file
 
 file_names = readdir(solar_time_series_rt)
-for gen in get_components(RenewableGen, sys, x -> get_prime_mover(x) == PrimeMovers.PVe)
+for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableGen, sys_base)
     plant_name = get_name(gen)
     if occursin(r"^gen", plant_name)
         _, number_ = split(plant_name, '-')
@@ -131,10 +131,10 @@ for gen in get_components(RenewableGen, sys, x -> get_prime_mover(x) == PrimeMov
         data = real_time_forecast,
         scaling_factor_multiplier = get_max_active_power
     )
-    add_time_series!(sys, gen, forecast_data)
+    add_time_series!(sys_base, gen, forecast_data)
 end
 
-for g in get_components(RenewableGen, sys)
+for g in get_components(RenewableGen, sys_base)
     @assert has_time_series(g)
 end
 

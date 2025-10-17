@@ -325,3 +325,25 @@ Extract time series data from old systems and save as individual H5 files, then 
 - HA/RT use point forecasts → single deterministic value per time step
 
 ---
+
+#### Error #8: Outdated `get_components()` call
+
+```
+ERROR: LoadError: MethodError: no method matching get_components(::Type{RenewableGen}, ::System, ::var"#335#336")
+Stacktrace:
+ [1] top-level scope
+   @ ~/Documents/GPAC/Models/ExtremeSolarTexas/scripts/make_real_time_data.jl:98
+```
+
+#### Impact
+- **Affected:** Real-time solar time series loading
+- **When triggered:** When filtering solar generators by prime mover type
+- **Result:** Script crashes immediately
+
+#### Fix Applied
+**File:** `scripts/make_real_time_data.jl`, line 98
+
+- Update call according to doicumentation 
+
+---
+
