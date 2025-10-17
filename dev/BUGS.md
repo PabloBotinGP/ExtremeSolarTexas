@@ -246,6 +246,7 @@ This allows the script to continue running when ancillary services are not inclu
 ### Answer from Anna 
 for the full model we would like to add ancillary services!
 ---
+
 #### Error #6: Incomplete SCED Data for Reserve Service Assignment
 ```
 ┌ Error: ArgumentError("column name \"Telemetered_Resource_Status\" not found in the data frame since it has no columns")
@@ -277,4 +278,50 @@ Some generators lack complete SCED (market) data with `Telemetered_Resource_Stat
 **For production:** Investigate missing SCED data or implement manual reserve assignment based on generator characteristics
 ---
 
+#### Error #7: Hour-Ahead and Real-Time Time Series Data Loading from Incompatible System Version
+
 ```
+ERROR: LoadError: MethodError: Cannot load old system with current PowerSystems.jl version
+```
+
+#### Impact
+- **Affected components:** Hour-ahead (HA) and real-time (RT) market system creation
+- **When triggered:** When attempting to load pre-existing HA/RT systems created with older PowerSystems.jl version
+- **Result:** Failure to create HA/RT market timeframes
+
+#### Root Cause
+The hour-ahead and real-time time series data were previously embedded in complete System objects (`.json` + `.h5` files) created with an older version of PowerSystems.jl. When the PowerSystems.jl package was updated:
+
+1. **Version incompatibility:** Old system files could not be accessed with new PowerSystems.jl
+3. **API changes:** Function signature for `get_components()` with filters changed between versions
+
+#### Solution Applied
+
+Extract time series data from old systems and save as individual H5 files, then adapt scripts to read directly from H5 files instead of loading old System objects.
+
+**Phase 1: Data Extraction**
+1. Opened old HA/RT systems using compatible PowerSystems.jl version
+2. Extracted time series data for each generator/load
+3. Saved as individual `.h5` files in organized directories:
+   - `DA_time_series_files/` (percentile-based, 3D arrays)
+   - `HA_time_series_files/` (deterministic, 2D arrays)
+   - `RT_time_series_files/` (deterministic, 2D arrays)
+
+**Phase 2: Script Adaptation**
+
+1. Add variable paths to file_pointers.jl
+2. Adapt make_hour and make_real to ingest new data (just as in make_day but with 2D (deterministic) instead of 3D (probabilistic) data).
+
+#### Data Structure Clarification
+
+| Timeframe | File Structure | Array Shape | Indexing |
+|-----------|---------------|-------------|----------|
+| **Day-Ahead (DA)** | 3D (probabilistic) | `(366, 36, 99)` | `power_output[time, value array, percentile]` |
+| **Hour-Ahead (HA)** | 2D (deterministic) | `(8760, 24)` | `power_output[time, value array]` |
+| **Real-Time (RT)** | 2D (deterministic) | `(105120, 24)` | `power_output[step, value array]` |
+
+**Why different dimensionality:**
+- DA uses quantile regression → outputs 99 percentiles for uncertainty quantification
+- HA/RT use point forecasts → single deterministic value per time step
+
+---

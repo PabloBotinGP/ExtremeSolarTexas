@@ -90,7 +90,11 @@ h5open(wind_time_series_rt, "r") do file
 end
 
 ####################################### Solar Time Series ##################################
-file_names = readdir("/Volumes/VM_WIN/Quantile data")
+# NOTE: Old hardcoded path no longer used - directory not found on this system
+# file_names = readdir("/Volumes/VM_WIN/Quantile data")
+# power_output = h5open(joinpath("/Volumes/VM_WIN/Quantile data", file_name), "r") do file
+
+file_names = readdir(solar_time_series_rt)
 for gen in get_components(RenewableGen, sys, x -> get_prime_mover(x) == PrimeMovers.PVe)
     plant_name = get_name(gen)
     if occursin(r"^gen", plant_name)
@@ -104,8 +108,10 @@ for gen in get_components(RenewableGen, sys, x -> get_prime_mover(x) == PrimeMov
         @show plant_name
     end
 
-    power_output = h5open(joinpath("/Volumes/VM_WIN/Quantile data", file_name), "r") do file
-        return read(file, "Power")[:, :, 50]
+    # Read power output from H5 file (2D array: [time_steps, horizon_points])
+    # RT files are 2D, not 3D like DA files
+    power_output = h5open(joinpath(solar_time_series_rt, file_name), "r") do file
+        return read(file, "Power")
     end
     power_output = vcat(power_output, power_output[(end - 59):end, :])
 
