@@ -189,4 +189,4 @@ for ((name, T), ts) in reserve_map
     add_time_series!(sys_base, res, forecast_data)
 end
 
-to_json(sys_base, "jsons/RT_sys.json", force = true)
+to_json(sys_base, "RT_sys.json", force = true)
