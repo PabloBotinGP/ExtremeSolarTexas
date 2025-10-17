@@ -113,7 +113,9 @@ for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, Renew
     power_output = h5open(joinpath(solar_time_series_rt, file_name), "r") do file
         return read(file, "Power")
     end
-    power_output = vcat(power_output, power_output[(end - 59):end, :])
+    # NOTE: Original code appended last 60 rows, creating 105180 total
+    # System expects exactly 105120 (365 days * 24 hours * 12 five-min intervals)
+    # power_output = vcat(power_output, power_output[(end - 59):end, :])
 
     peak_power = maximum(power_output)
     @assert peak_power > 0

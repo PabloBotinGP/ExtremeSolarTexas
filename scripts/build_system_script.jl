@@ -727,6 +727,7 @@ to_json(sys, "post_thermal_sys.json", force = true)
 # =====================================================================================
 
 include("add_services.jl")  # Add ancillary services (reserves)
+# Produces intermediate_sys_w_services.json system.
 
 # Export geographic data for visualization
 write_lines_geo_data(sys, "line_coords_modified")
@@ -739,13 +740,16 @@ finalize_system(sys)  # This saves to "base_sys.json"
 # SECTION 10: MARKET DATA GENERATION
 # =====================================================================================
 # Create separate system files for different electricity market timeframes
+# Each script automatically saves its output systems
 # =====================================================================================
 
-include("make_hour_ahead_data.jl")   # Create hour-ahead market system
-include("make_day_ahead_data.jl")    # Create day-ahead market system
-# include("make_real_time_data.jl")  # Skipped: requires quantile solar data not in repo
+include("make_day_ahead_data.jl")    # Creates and saves DA_sys.json + scenarios
+include("make_hour_ahead_data.jl")   # Creates and saves jsons/HA_sys.json
+include("make_real_time_data.jl")    # Creates and saves jsons/RT_sys.json
 
-# Export final market systems
-to_json(sys_DA, "sys_da.json", force = true)    # Day-ahead system
-to_json(sys_HA, "sys_ha.json", force = true)    # Hour-ahead system
-# to_json(sys_RT, "sys_rt.json", force = true)  # Skipped: RT system not created
+# Market systems are automatically saved by their respective scripts:
+#   - DA_sys.json (day-ahead deterministic)
+#   - DA_sys_31_scenarios.json (day-ahead 31 scenarios)
+#   - DA_sys_84_scenarios.json (day-ahead 84 scenarios)
+#   - jsons/HA_sys.json (hour-ahead market)
+#   - jsons/RT_sys.json (real-time market)

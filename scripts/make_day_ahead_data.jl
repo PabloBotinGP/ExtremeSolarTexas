@@ -8,7 +8,6 @@ include("manual_data_entries.jl")
 
 
 sys_base = System("intermediate_sys_w_services.json")
-# sys_base = deepcopy(system)
 clear_time_series!(sys_base)
 PSY.IS.assign_new_uuid!(sys_base)
 set_units_base_system!(sys_base, "SYSTEM_BASE") 
@@ -155,48 +154,56 @@ end
 sys_DA = deepcopy(sys_base)
 
 ####################################### Solar Time Series ##################################
-file_names = readdir(solar_time_series)
+file_names = readdir(solar_time_series_da)
+
 for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, RenewableDispatch, sys_DA)
     plant_name = get_name(gen)
-    #println(plant_name)
-    if plant_name != "Glove Solar"
-    if occursin(r"^gen", plant_name) && plant_name != "Blue Bell Solar II"
+    
+    # Skip Glove Solar if it exists
+    if plant_name == "Glove Solar"
+        continue
+    end
+    
+    # Handle naming conventions for generated plants
+    if occursin(r"^gen", plant_name)
         _, number_ = split(plant_name, '-')
         number = parse(Int, number_) - 1
         file_name = "solar$(number).h5"
-        println(file_name)
-    elseif plant_name == "scripts/input_data/Solar/DA_time_series_files/Blue Bell Solar II.h5"
-        file_name = "Blue Bell Solar II"
     else
         file_name = "$(plant_name).h5"
     end
+    
     if file_name ∉ file_names
-        @show plant_name
+        @warn "File not found for solar plant: $(plant_name) (looking for $(file_name))"
+        continue
     end
-    power_output = h5open(joinpath(solar_time_series, file_name), "r") do file
-        return read(file, "Power")[:, :, :]
+    
+    # Read power output from H5 file (3D array: [days, hours, scenarios])
+    power_output = h5open(joinpath(solar_time_series_da, file_name), "r") do file
+        return read(file, "Power")
     end
+    
+    # Calculate peak power from first scenario (same as hour-ahead approach)
     peak_power = maximum(power_output[:, :, 1])
     set_rating!(gen, peak_power)
-    println(peak_power)
+    
+    # Build day-ahead forecasts using first scenario
     day_ahead_forecast = Dict{Dates.DateTime, Vector{Float64}}()
-    num_days = 365
-    for ix in 1:num_days 
-        #peak_power = maximum(power_output[ix, :, 1])
-        #@assert peak_power > 0
-        @assert get_base_power(gen) <= get_base_power(gen) 
-        power_output_reshape = power_output, :, ix
-        normalized_power = power_output[1, :, 1]
-        day_ahead_forecast[initial_time + (ix - 1) * da_interval] = normalized_power#[ix, :]
+    num_days = min(size(power_output, 1), day_count)  # Limit to day_count (365) to match system
+    
+    for ix in 1:num_days
+        # Extract first scenario data for this day
+        normalized_power = power_output[ix, :, 1]
+        day_ahead_forecast[initial_time + (ix - 1) * da_interval] = normalized_power
     end
-        forecast_data = Deterministic(
+    
+    forecast_data = Deterministic(
         name = "max_active_power",
         data = day_ahead_forecast,
         resolution = da_resolution,
         scaling_factor_multiplier = nothing
     )
     add_time_series!(sys_DA, gen, forecast_data)
-end
 end
 
 
@@ -297,7 +304,7 @@ for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, Renew
     end
     if file_name == "Blue Bell Solar II.h5"
         file_name = "BlueBell Solar.h5"
-    end
+    end # Pablo; Why are we overwritting Blue Bell Solar? 
     println(file_name)
     power_output_ = h5open(joinpath(ts_data, file_name), "r") do file
         return read(file, "Power")

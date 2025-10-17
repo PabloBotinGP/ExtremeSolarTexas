@@ -5,12 +5,12 @@ using TimeSeries
 using PowerSystems
 using Dates
 
-json_data = open("scripts/input_data/HA_sys_UC_experiment.json", "r") do io
+json_data = open("scripts/input_data/Solar/HA_time_series_files/HA_sys_UC_experiment.json", "r") do io
     data = JSON3.read(io)
     return data
 end
 
-h5data = h5open("scripts/input_data/HA_sys_UC_experiment_time_series_storage.h5", "r") do file
+h5data = h5open("scripts/input_data/Solar/HA_time_series_files/HA_sys_UC_experiment_time_series_storage.h5", "r") do file
     # In HDF5, data is organized into datasets and groups.
     # This is a basic example that attempts to load all top-level datasets and groups into a dictionary.
     # You might need to customize this part depending on the structure of your HDF5 file.

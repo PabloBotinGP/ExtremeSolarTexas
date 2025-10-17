@@ -212,4 +212,4 @@ for gen in get_components(x -> get_prime_mover_type(x) == PrimeMovers.PVe, Renew
     add_time_series!(sys_HA, gen, forecast_data)
 end
 
-to_json(sys_HA, "jsons/HA_sys.json", force=true)
+to_json(sys_HA, "HA_sys.json", force=true)
