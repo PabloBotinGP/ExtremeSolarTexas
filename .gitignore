@@ -132,3 +132,8 @@ $RECYCLE.BIN/
 
 ## Acknowledgements
 # Many thanks to `https://gitignore.io/`, written and maintained by Joe Blau, which contributed much material to this gitignore file.
+
+# Ignore JSON and Markdown files (keep README.md tracked)
+*.json
+*.md
+!README.md
