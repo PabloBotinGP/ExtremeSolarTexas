@@ -24,6 +24,8 @@ logger = configure_logging(console_level=Logging.Info)
 
 # Load Day Ahead system 
 sys = System("DA_sys.json")
+# Temporarily remove Marble Falls hydro plant to avoid infeasibility issues.
+remove_components!(x -> get_name(x) in ("MARBLE FALLS_6", "MARBLE FALLS_4", "MARBLE FALLS_2", "MARBLE FALLS_5"), sys, HydroDispatch)
 
 # Define Storage Model. Why are we defining this? 
 storage_model = DeviceModel(
@@ -59,7 +61,7 @@ mip_gap = 0.1
 solver = optimizer_with_attributes(
                 Xpress.Optimizer,
                 "MIPRELSTOP" => mip_gap) # Relaxed MIP gap (ratioGap) setting to improve speed.
-
+# Relative MIP gap tolerance of 10% (coarse). The solver may stop earlier for speed.  
 # Create Decision Model. 
 problem = DecisionModel(
                         template_uc, 

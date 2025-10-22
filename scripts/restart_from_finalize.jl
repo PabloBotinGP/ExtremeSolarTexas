@@ -1,42 +1,39 @@
 #!/usr/bin/env julia
 # Restart build from finalization step (after thermal processing complete)
 # Resumes from line 736 of build_system_script.jl
+# Activate the main project environment (not the scripts subdirectory)
 
-# Change to script directory to ensure relative paths work
-cd(dirname(@__FILE__))
+using Pkg
+Pkg.activate(joinpath(@__DIR__, ".."))  # Activate parent directory (ExtremeSolarTexas)
 
 using PowerSystems
-include("scripts/system_build_functions.jl")
-include("scripts/file_pointers.jl")
-include("scripts/manual_data_entries.jl")
+include("system_build_functions.jl")
+include("file_pointers.jl")
+include("manual_data_entries.jl")
 
-println("Loading post_thermal_sys.json...")
-sys = System("post_thermal_sys.json")
-
-println("Running finalize_system...")
-finalize_system(sys)
-
-println("Loading base_sys.json...")
-sys = System("base_sys.json")
-
-# Save as intermediate_sys.json for add_services.jl
-println("Preparing system for service addition...")
-to_json(sys, "intermediate_sys.json", force = true)
+# Load the intermediate system (before services were added)
+println("Loading intermediate_sys.json (before adding reserves)...")
+sys = System("intermediate_sys.json")
 
 # Add ancillary services (reserves)
 println("Adding ancillary services (reserves)...")
-include("scripts/add_services.jl")
+include("add_services.jl")
 
+# Save the system with services added
+println("Saving intermediate_sys_w_services.json...")
+to_json(sys, "intermediate_sys_w_services.json", force = true)
+
+# Now create market timeframe systems
 println("Creating market timeframe systems...")
-include("scripts/make_day_ahead_data.jl")    # Creates sys_DA
-# include("scripts/make_real_time_data.jl")  # Skipped: requires quantile solar data not in repo
-
-println("Exporting final market systems...")
-to_json(sys_DA, "sys_da.json", force = true)
-# to_json(sys_RT, "sys_rt.json", force = true)  # Skipped: RT system not created
+include("make_day_ahead_data.jl")    # Creates and saves DA_sys.json + scenarios
+include("make_hour_ahead_data.jl")   # Creates and saves jsons/HA_sys.json
+include("make_real_time_data.jl")    # Creates and saves jsons/RT_sys.json
 
 println("\n✓ Build complete! Systems created:")
-println("  - base_sys.json")
+println("  - intermediate_sys.json (loaded)")
 println("  - intermediate_sys_w_services.json (with reserves)")
-println("  - sys_da.json (day-ahead market)")
-# println("  - sys_rt.json (real-time market)")  # Skipped
+println("  - DA_sys.json (day-ahead deterministic)")
+println("  - DA_sys_31_scenarios.json (day-ahead 31 scenarios)")
+println("  - DA_sys_84_scenarios.json (day-ahead 84 scenarios)")
+println("  - HA_sys.json (hour-ahead market)")
+println("  - RT_sys.json (real-time market)")

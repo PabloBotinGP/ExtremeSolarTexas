@@ -1,0 +1,13 @@
+Fix: Correct get_components() function signature in RT script
+
+PowerSystems.jl API changed the argument order for get_components() when
+using a filter function. Updated to correct signature.
+
+Changed:
+  get_components(RenewableGen, sys, filter_function)  # OLD
+To:
+  get_components(filter_function, RenewableGen, sys)  # NEW
+
+File: scripts/make_real_time_data.jl (line 98)
+
+Related: Error #8 in dev/BUGS.md

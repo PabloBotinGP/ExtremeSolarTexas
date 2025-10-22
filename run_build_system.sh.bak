@@ -1,0 +1,10 @@
+#!/bin/bash
+# Wrapper script to run build_system_script.jl with proper environment
+
+# Set Xpress library path
+export DYLD_LIBRARY_PATH="/Users/pbotin/Applications/FICO_Xpress_Install/lib:$DYLD_LIBRARY_PATH"
+
+# Change to project directory
+cd "$(dir
+# Run Julia with the build system script
+exec julia --project=. scripts/build_system_script.jl
