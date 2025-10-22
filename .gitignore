@@ -137,3 +137,6 @@ $RECYCLE.BIN/
 *.json
 *.md
 !README.md
+
+# Ignore plain text files
+*.txt
