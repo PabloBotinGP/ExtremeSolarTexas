@@ -141,6 +141,9 @@ $RECYCLE.BIN/
 # Ignore plain text files
 *.txt
 
+# Ignore backup files
+*.bak
+
 # Ignore large generated folders
 pull_data/
 simulation_debug/
