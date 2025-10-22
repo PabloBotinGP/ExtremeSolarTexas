@@ -24,8 +24,21 @@ logger = configure_logging(console_level=Logging.Info)
 
 # Load Day Ahead system 
 sys = System("DA_sys.json")
-# Temporarily remove Marble Falls hydro plant to avoid infeasibility issues.
-remove_components!(x -> get_name(x) in ("MARBLE FALLS_6", "MARBLE FALLS_4", "MARBLE FALLS_2", "MARBLE FALLS_5"), sys, HydroDispatch)
+
+# Temporal fix: some original TAMU generators have incorrect active-power limits (min==max).
+# Force all HydroDispatch components to have a minimum active-power limit of 0.0 to avoid infeasible UC caused by bad input data.
+# Ultimately need to fix this on the original data or right after loading the original system
+for h in collect(get_components(HydroDispatch, sys))
+    lims = get_active_power_limits(h)
+    if !isnothing(lims) && lims.min != 0.0
+        newlims = (min = 0.0, max = lims.max)
+        try
+            set_active_power_limits!(h, newlims)
+        catch e
+            @warn "Failed to set active_power_limits for $(get_name(h)): $e"
+        end
+    end
+end
 
 # Define Storage Model. Why are we defining this? 
 storage_model = DeviceModel(
