@@ -144,7 +144,7 @@ $RECYCLE.BIN/
 # Ignore backup files
 *.bak
 
-# Ignore large generated folders
-pull_data/
+# Ignore irrelevant folders
 simulation_debug/
 analysis/
+pablo_scripts/

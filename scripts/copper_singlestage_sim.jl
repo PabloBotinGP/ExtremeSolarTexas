@@ -28,17 +28,17 @@ sys = System("DA_sys.json")
 # Temporal fix: some original TAMU generators have incorrect active-power limits (min==max).
 # Force all HydroDispatch components to have a minimum active-power limit of 0.0 to avoid infeasible UC caused by bad input data.
 # Ultimately need to fix this on the original data or right after loading the original system
-for h in collect(get_components(HydroDispatch, sys))
-    lims = get_active_power_limits(h)
-    if !isnothing(lims) && lims.min != 0.0
-        newlims = (min = 0.0, max = lims.max)
-        try
-            set_active_power_limits!(h, newlims)
-        catch e
-            @warn "Failed to set active_power_limits for $(get_name(h)): $e"
-        end
-    end
-end
+# for h in collect(get_components(HydroDispatch, sys))
+#     lims = get_active_power_limits(h)
+#     if !isnothing(lims) && lims.min != 0.0
+#         newlims = (min = 0.0, max = lims.max)
+#         try
+#             set_active_power_limits!(h, newlims)
+#         catch e
+#             @warn "Failed to set active_power_limits for $(get_name(h)): $e"
+#         end
+#     end
+# end
 
 # Define Storage Model. Why are we defining this? 
 storage_model = DeviceModel(
@@ -55,7 +55,8 @@ storage_model = DeviceModel(
 # Define Unit Commitment template. 
 # Creates a ProblemTemplate with default DeviceModels for a Unit Commitment problem.
 template_uc = template_unit_commitment(;
-network = NetworkModel(CopperPlatePowerModel; use_slacks = true)) # Establishes the model for the network as a copper plate with slacks.\
+# network = NetworkModel(CopperPlatePowerModel; use_slacks = true)) # Establishes the model for the network as a copper plate with slacks.\
+network = NetworkModel(CopperPlatePowerModel;))
 # Injection Device Formulations. 
 set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment) # TBUC; No ramping constraints
 set_device_model!(template_uc, ThermalMultiStart, ThermalBasicUnitCommitment)
@@ -97,8 +98,7 @@ timestamp = Dates.format(now(), "yyyy-mm-dd_HHMMSS")
 out_dir = joinpath(@__DIR__, "..", "simulation_debug", "singlestage_$(timestamp)")
 isdir(out_dir) || mkpath(out_dir)
 build!(problem; output_dir = out_dir)
-# execute!(problem) # What is the difference between solve and execute? 
-solve!(problem) # This is what I found on the documentation. 
+solve!(problem)
 
 ########################## Results #############################
 # using PowerGraphics
