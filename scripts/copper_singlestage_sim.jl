@@ -22,25 +22,12 @@ using Xpress
 # Configure logging
 logger = configure_logging(console_level=Logging.Info)
 
-# Load Day Ahead system 
-sys = System("DA_sys.json")
+# Load Day Ahead system - use absolute path to ensure it works from any directory
+sys_path = joinpath(@__DIR__, "..", "DA_sys.json")
+sys = System(sys_path)
 
-# Temporal fix: some original TAMU generators have incorrect active-power limits (min==max).
-# Force all HydroDispatch components to have a minimum active-power limit of 0.0 to avoid infeasible UC caused by bad input data.
-# Ultimately need to fix this on the original data or right after loading the original system
-# for h in collect(get_components(HydroDispatch, sys))
-#     lims = get_active_power_limits(h)
-#     if !isnothing(lims) && lims.min != 0.0
-#         newlims = (min = 0.0, max = lims.max)
-#         try
-#             set_active_power_limits!(h, newlims)
-#         catch e
-#             @warn "Failed to set active_power_limits for $(get_name(h)): $e"
-#         end
-#     end
-# end
 
-# Define Storage Model. Why are we defining this? 
+# Define Storage Model. 
 storage_model = DeviceModel(
     EnergyReservoirStorage,
     StorageDispatchWithReserves;
