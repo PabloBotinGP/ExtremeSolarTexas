@@ -2,7 +2,7 @@
 
 julia_version = "1.11.7"
 manifest_format = "2.0"
-project_hash = "69a988d7cb01184a602235ba6d703b07e252c010"
+project_hash = "84f0fcb02e7b7d97d3cce6262dbd29bb3166a7a7"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "27cecae79e5cc9935255f90c53bb831cc3c870d7"
@@ -663,7 +663,7 @@ version = "2.12.2+0"
 
 [[deps.HydroPowerSimulations]]
 deps = ["Dates", "InfrastructureSystems", "JuMP", "PowerSimulations", "PowerSystems"]
-git-tree-sha1 = "1f7e5fa5773c491d39b55c0ed7711d74fc8b0e0f"
+git-tree-sha1 = "535d9a66b3541b1de3b2589cbaae803adc0661e1"
 repo-rev = "psy5"
 repo-url = "https://github.com/NREL-Sienna/HydroPowerSimulations.jl.git"
 uuid = "fc1677e0-6ad7-4515-bf3a-bd6bf20a0b1b"
@@ -683,7 +683,7 @@ version = "0.7.8"
 
 [[deps.InfrastructureSystems]]
 deps = ["CSV", "DataFrames", "DataFramesMeta", "DataStructures", "Dates", "DocStringExtensions", "H5Zblosc", "HDF5", "InteractiveUtils", "JSON3", "Logging", "Mustache", "Pkg", "PrettyTables", "Printf", "Random", "SHA", "SQLite", "Serialization", "StringTemplates", "StructTypes", "TOML", "Tables", "TerminalLoggers", "TimeSeries", "TimerOutputs", "UUIDs", "YAML"]
-git-tree-sha1 = "e676dbda2bb933075305b53081bfa6ce1af61951"
+git-tree-sha1 = "c70dc450aa0a23574ddc3dec36b59a76b05da2d6"
 repo-rev = "main"
 repo-url = "https://github.com/NREL-Sienna/InfrastructureSystems.jl.git"
 uuid = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
@@ -1243,7 +1243,7 @@ version = "1.5.0"
 
 [[deps.PowerFlows]]
 deps = ["DataFrames", "DataStructures", "Dates", "InfrastructureSystems", "JSON3", "KLU", "LineSearches", "LinearAlgebra", "Logging", "PowerNetworkMatrices", "PowerSystems", "SparseArrays", "StaticArrays"]
-git-tree-sha1 = "ae4b1ed7b2ed2a208dfe6827ce03ac5d437d9f7b"
+git-tree-sha1 = "78e73594dcfbba51fc7b752479b6b5a0c1828bd0"
 repo-rev = "psy5"
 repo-url = "https://github.com/NREL-Sienna/PowerFlows.jl.git"
 uuid = "94fada2c-fd9a-4e89-8d82-81405f5cb4f6"
@@ -1257,7 +1257,7 @@ version = "0.21.5"
 
 [[deps.PowerNetworkMatrices]]
 deps = ["AppleAccelerate", "DocStringExtensions", "HDF5", "InfrastructureSystems", "JSON3", "KLU", "LinearAlgebra", "MKL", "Pardiso", "PowerSystems", "SparseArrays"]
-git-tree-sha1 = "1a1fb954cd853721d0fa5ea5820b1d4c44172827"
+git-tree-sha1 = "509d686bfd4029c195ce22ab0dade263a23ed2da"
 repo-rev = "psy5"
 repo-url = "https://github.com/NREL-Sienna/PowerNetworkMatrices.jl.git"
 uuid = "bed98974-b02a-5e2f-9fe0-a103f5c450dd"
@@ -1265,15 +1265,21 @@ version = "0.13.0"
 
 [[deps.PowerSimulations]]
 deps = ["CSV", "DataFrames", "DataFramesMeta", "DataStructures", "Dates", "Distributed", "Distributions", "DocStringExtensions", "HDF5", "InfrastructureSystems", "InteractiveUtils", "JSON3", "JuMP", "LinearAlgebra", "Logging", "MathOptInterface", "PowerFlows", "PowerModels", "PowerNetworkMatrices", "PowerSystems", "PrettyTables", "ProgressMeter", "Random", "Serialization", "TimeSeries", "TimerOutputs"]
-git-tree-sha1 = "88f66f9a7887df40c824785ff7afce7144c0443f"
-repo-rev = "psy5"
-repo-url = "https://github.com/NREL-Sienna/PowerSimulations.jl.git"
+path = "/Users/pbotin/Documents/GPAC/Sienna/PowerSimulations.jl"
 uuid = "e690365d-45e2-57bb-ac84-44ba829e73c4"
 version = "0.30.1"
 
+[[deps.PowerSystemCaseBuilder]]
+deps = ["CSV", "DataFrames", "DataStructures", "Dates", "Downloads", "HDF5", "InfrastructureSystems", "JSON3", "LazyArtifacts", "PowerSystems", "PrettyTables", "Random", "SHA", "TimeSeries"]
+git-tree-sha1 = "3fff146375f2147bee40c07f5162d932e8d15000"
+repo-rev = "psy5"
+repo-url = "https://github.com/NREL-Sienna/PowerSystemCaseBuilder.jl.git"
+uuid = "f00506e0-b84f-492a-93c2-c0a9afc4364e"
+version = "1.3.11"
+
 [[deps.PowerSystems]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DocStringExtensions", "InfrastructureSystems", "InteractiveUtils", "JSON3", "LinearAlgebra", "Logging", "PowerFlowData", "PrettyTables", "TimeSeries", "UUIDs", "Unicode", "YAML"]
-git-tree-sha1 = "4f955f76ac93b2113bc707c07bdafb7b3ead4462"
+git-tree-sha1 = "5fb8b6053e85c54471b1feecd011643f50488542"
 repo-rev = "psy5"
 repo-url = "https://github.com/NREL-Sienna/PowerSystems.jl.git"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
@@ -1575,7 +1581,7 @@ version = "1.5.1"
 
 [[deps.StorageSystemsSimulations]]
 deps = ["DataStructures", "Dates", "DocStringExtensions", "HDF5_jll", "InfrastructureSystems", "JuMP", "LinearAlgebra", "MathOptInterface", "PowerSimulations", "PowerSystems"]
-git-tree-sha1 = "60ccd17bffe7f254e792c376497a5d592b347d42"
+git-tree-sha1 = "e12a7ef635b105660e1c640359a057decfd52121"
 repo-rev = "psy5"
 repo-url = "https://github.com/NREL-Sienna/StorageSystemsSimulations.jl.git"
 uuid = "e2f1a126-19d0-4674-9252-42b2384f8e3c"
