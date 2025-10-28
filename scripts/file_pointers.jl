@@ -3,7 +3,7 @@ COST_FUNCTION_PATHS = joinpath(SOURCE_DATA_DIR, "Thermal", "cost_function_plots"
 cost_function_file = joinpath(SOURCE_DATA_DIR, "Thermal", "cost_function_params.json")
 
 # Original Data Files
-TAMU_matpower_file = joinpath(SOURCE_DATA_DIR, "ACTIVSg2000", "ACTIVSg2000.json") # Used to be .m but corrected and converted to .json
+TAMU_matpower_file = joinpath(SOURCE_DATA_DIR, "ACTIVSg2000", "ACTIVSg2000.m")
 TAMU_shp_file = joinpath(SOURCE_DATA_DIR, "ACTIVSg2000", "2000-bus-buses.shp")
 
 # Mapping and Metadadata files

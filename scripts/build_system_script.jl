@@ -21,6 +21,9 @@ configure_logging(file_level = Logging.Info, console_level = Logging.Info)
 
 # Load base system and initialize
 sys = System(TAMU_matpower_file)
+# Fix HydroDispatch active power limits to prevent UC infeasibility
+fix_hydro_dispatch_limits!(sys)
+# Add coordinates to buses
 add_bus_coords(sys, TAMU_shp_file)
 # write_lines_geo_data(sys, "line_coords_original")
 write_gen_buses_geo_data(sys, "bus_gens_coords_original")

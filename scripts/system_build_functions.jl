@@ -61,6 +61,31 @@ function safe_remove_component!(sys, components, description)
     end
 end
 
+function fix_hydro_dispatch_limits!(sys::System)
+
+    @info "Fixing HydroDispatch active power limits..."
+    
+    hydro_components = collect(get_components(HydroDispatch, sys))
+    modified_count = 0
+    
+    for h in hydro_components
+        lims = get_active_power_limits(h)
+        if !isnothing(lims) && lims.min != 0.0
+            newlims = (min = 0.0, max = lims.max)
+            try
+                set_active_power_limits!(h, newlims)
+                modified_count += 1
+                @debug "Fixed active_power_limits for $(get_name(h)): $(lims) -> $(newlims)"
+            catch e
+                @warn "Failed to set active_power_limits for $(get_name(h)): $e"
+            end
+        end
+    end
+    
+    @info "Fixed active power limits for $modified_count HydroDispatch components"
+    return modified_count
+end
+
 function complete_lines_characteristic_impedance!(line_params, sys)
     z_c_data =
         Dict(115.0 => Float64[], 161.0 => Float64[], 230.0 => Float64[], 500.0 => Float64[])
