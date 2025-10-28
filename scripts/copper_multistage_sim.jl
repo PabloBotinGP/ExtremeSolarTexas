@@ -1,10 +1,7 @@
-# Run from main folder. 
 # Hitting infeasibility issues, this documentation might be helpful: 
 # https://nrel-sienna.github.io/PowerSimulations.jl/latest/modeler_guide/debugging_infeasible_models/
-# Next steps: 
-    # Identify what is causing the infeasibility (e.g., line limits, reserve requirements, unit commitment constraints)
-    # Use PS tools to help debug this situation (see link above). 
-    
+
+# Import necessary packages.
 using PowerSystems
 using PowerSimulations
 using PowerNetworkMatrices
@@ -15,17 +12,17 @@ using DataFrames
 using Logging
 using TimeSeries
 using StorageSystemsSimulations
-#using HiGHS #solver
+#using HiGHS #solver. Use this if no Xpress license is available.
 using Xpress
-#using PowerGraphics
-mip_gap = 0.1
+#using PowerGraphics # Not available atm.
 
-# Load all 3 systems (relative paths)
+# Configure logging
+logger = configure_logging(console_level=Logging.Info)
+
+# Load all 3 systems.
 sys_DA = System("DA_sys.json")
 sys_HA = System("HA_sys.json")
 sys_RT = System("RT_sys.json")
-
-logger = configure_logging(console_level=Logging.Info)
 
 # Define Storage Model. Why are we 
 storage_model = DeviceModel(
@@ -36,7 +33,7 @@ storage_model = DeviceModel(
         "energy_target" => false,
         "cycling_limits" => false,
         "regularization" => true,
-    ),
+    ), # Why these? How can I find more info about attributes? 
 )
 
 # Define all 3 stage templates
@@ -81,16 +78,16 @@ set_service_model!(template_rt, ServiceModel(VariableReserve{ReserveDown}, Range
 ################## Simulation Setup ####################
 initial_date = "2018-08-01"
 start_time =DateTime(string(initial_date,"T00:00:00"))
-optimizer = optimizer_with_attributes(
+solver = optimizer_with_attributes(
                 Xpress.Optimizer,
                 #"parallel" => "on",
-                "MIPRELSTOP" => mip_gap)
+                "MIPRELSTOP" => 0.1)    # Relative MIP gap tolerance of 10% (coarse). The solver may stop earlier for speed.
 models = SimulationModels(; 
     decision_models =  [DecisionModel(
                             template_uc, 
                             sys_DA;
                             name = "UC",
-                            optimizer = optimizer,       
+                            optimizer = solver,       
                             optimizer_solve_log_print = true,
                             calculate_conflict = true,
                             store_variable_names = true,), 
@@ -98,7 +95,7 @@ models = SimulationModels(;
                             template_ed, 
                             sys_HA;
                             name = "ED", 
-                            optimizer = optimizer,  
+                            optimizer = solver,  
                             optimizer_solve_log_print = true,
                             calculate_conflict = true,
                             store_variable_names = true,),
@@ -106,7 +103,7 @@ models = SimulationModels(;
                             template_rt, 
                             sys_RT;
                             name = "RT", 
-                            optimizer = optimizer,  
+                            optimizer = solver,  
                             optimizer_solve_log_print = true,
                             calculate_conflict = true,
                             store_variable_names = true,)

@@ -1,10 +1,4 @@
-# Run from main folder. 
-# Hitting infeasibility issues, this documentation might be helpful: 
-# https://nrel-sienna.github.io/PowerSimulations.jl/latest/modeler_guide/debugging_infeasible_models/
-# Next steps: 
-    # Identify what is causing the infeasibility (e.g., line limits, reserve requirements, unit commitment constraints)
-    # Use PS tools to help debug this situation (see link above). 
-    
+# Import necessary packages.
 using PowerSystems
 using PowerSimulations
 using PowerNetworkMatrices
@@ -15,24 +9,23 @@ using DataFrames
 using Logging
 using TimeSeries
 using StorageSystemsSimulations
-#using HiGHS #solver
+#using HiGHS # Use this solver if no Xpress license is available.
 using Xpress
-#using PowerGraphics
+#using PowerGraphics # Not available atm.
 
 # Configure logging
 logger = configure_logging(console_level=Logging.Info)
 
 # Load Day Ahead system - use absolute path to ensure it works from any directory
-sys_path = joinpath(@__DIR__, "..", "DA_sys.json")
+sys_DA = System("DA_sys.json")
 sys = System(sys_path)
-
 
 # Define Storage Model. 
 storage_model = DeviceModel(
     EnergyReservoirStorage,
     StorageDispatchWithReserves;
     attributes=Dict(
-        "reservation" => true,
+        "reservation" => false,
         "energy_target" => false,
         "cycling_limits" => false,
         "regularization" => true,
