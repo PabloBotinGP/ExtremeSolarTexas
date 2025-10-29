@@ -17,8 +17,7 @@ using Xpress
 logger = configure_logging(console_level=Logging.Info)
 
 # Load Day Ahead system - use absolute path to ensure it works from any directory
-sys_DA = System("DA_sys.json")
-sys = sys_DA
+sys = System("DA_sys.json")
 
 # Define Storage Model. 
 storage_model = DeviceModel(
