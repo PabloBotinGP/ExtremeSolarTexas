@@ -20,29 +20,39 @@ using JSON
 
 # Ensure Xpress native library is available early so long runs fail fast with a clear message.
 function ensure_xpress_lib(; throw_on_fail::Bool = true)
+    # Choose the library name by OS
+    libname = Sys.islinux() ? "libxprs.so" : "libxprs.dylib"
+
+    # Try default dynamic loader path first
     try
-        Libdl.dlopen("libxprs.dylib")
-        @info "libxprs.dylib is available on the dynamic loader path"
+        Libdl.dlopen(libname)
+        @info "$libname is available on the dynamic loader path"
         return true
     catch _e
-        candidate_paths = [
+        # Candidate paths for different OSes
+        candidate_paths = Sys.islinux() ? [
+            "/nopt/nrel/apps/software/xpressmp/9.2.5/lib/libxprs.so",
+            "/opt/xpress/lib/libxprs.so",
+        ] : [
             "/Applications/FICO Xpress/Xpress Workbench.app/Contents/Resources/xpressmp/lib/libxprs.dylib",
             joinpath(homedir(), "Applications", "FICO_Xpress_Install", "lib", "libxprs.dylib"),
             "/usr/local/lib/libxprs.dylib",
             "/opt/xpress/lib/libxprs.dylib",
         ]
+
         for p in candidate_paths
             if isfile(p)
                 try
                     Libdl.dlopen(p)
-                    @info "Loaded libxprs.dylib from: $p"
+                    @info "Loaded $libname from: $p"
                     return true
                 catch e2
-                    @warn "Found libxprs at $p but failed to load: $e2"
+                    @warn "Found $libname at $p but failed to load: $e2"
                 end
             end
         end
-        msg = "libxprs.dylib could not be loaded.\n  - Ensure FICO Xpress is installed.\n  - Add the directory containing libxprs.dylib to DYLD_LIBRARY_PATH, e.g. export DYLD_LIBRARY_PATH=\"/path/to/xpress/lib:\\$DYLD_LIBRARY_PATH\"\n  - Or create a symlink to /usr/local/lib: sudo ln -s /path/to/libxprs.dylib /usr/local/lib/libxprs.dylib\n  - On Apple Silicon, if Xpress is x86_64 only, run Julia under Rosetta or install an x86_64 Julia.\n  - Ensure a valid Xpress license is configured."
+
+        msg = "$libname could not be loaded.\n  - Ensure FICO Xpress is installed.\n  - Add the directory containing $libname to LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (macOS).\n  - Or create a symlink to /usr/local/lib.\n  - Ensure a valid Xpress license is configured."
         @error(msg)
         throw_on_fail && throw(ErrorException(msg))
         return false
