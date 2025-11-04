@@ -113,10 +113,14 @@ steps_sim = 2 # Number of days to simulate
 current_date = string(today())
 
 # Feet Forward; Describes how info is passed between steps.
-feedforward = Dict("ED" =>[SemiContinuousFeedforward(; component_type = ThermalStandard, source = OnVariable, affected_values = [ActivePowerVariable],), 
-                           SemiContinuousFeedforward(; component_type = ThermalMultiStart, source = OnVariable, affected_values = [ActivePowerVariable],)],
-                    "RT" =>[SemiContinuousFeedforward(; component_type = ThermalStandard, source = OnVariable, affected_values = [ActivePowerVariable],), 
-                           SemiContinuousFeedforward(; component_type = ThermalMultiStart, source = OnVariable, affected_values = [ActivePowerVariable],)],)
+feedforward = Dict(
+    "ED" => [
+        SemiContinuousFeedforward(; component_type = ThermalStandard, source = OnVariable, affected_values = [ActivePowerVariable]),
+    ],
+    "RT" => [
+        SemiContinuousFeedforward(; component_type = ThermalStandard, source = OnVariable, affected_values = [ActivePowerVariable]),
+    ],
+)
 # Are we not missing the UC? No because we start with the day ahead assumptions (unit commitment), then we pass info forward to ED and RT.
 
 # Set up simulation sequence.
