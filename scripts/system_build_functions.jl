@@ -960,7 +960,8 @@ function make_thermal_gen_nuc(
     start_up = (hot = 1e4, warm = 1e4, cold = 1e4)
     shut_down = 1e6
     cost_curve = CostCurve(new_var_cost)
-    cost = ThermalGenerationCost(cost_curve, fixed, start_up, shut_down)
+    # cost = ThermalGenerationCost(cost_curve, fixed, start_up, shut_down)
+    cost = ThermalGenerationCost(nothing)
     #set_variable!(op_cost, cost)
     ##set_no_load!(op_cost, 0.0)
     set_operation_cost!(temp_gen, cost)
