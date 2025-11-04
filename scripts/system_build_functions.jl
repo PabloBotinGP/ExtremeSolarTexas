@@ -29,7 +29,7 @@ function ensure_xpress_lib(; throw_on_fail::Bool = true)
         @info "$libname is available on the dynamic loader path"
         return true
     catch _e
-        # Candidate paths for different OSes
+        # Candidate paths for different OS
         candidate_paths = Sys.islinux() ? [
             "/nopt/nrel/apps/software/xpressmp/9.2.5/lib/libxprs.so",
             "/opt/xpress/lib/libxprs.so",
