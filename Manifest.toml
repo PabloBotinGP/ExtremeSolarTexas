@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.7"
+julia_version = "1.11.4"
 manifest_format = "2.0"
-project_hash = "84f0fcb02e7b7d97d3cce6262dbd29bb3166a7a7"
+project_hash = "82c8307ebdcb197de6234a2eba726b76125b2265"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "27cecae79e5cc9935255f90c53bb831cc3c870d7"
@@ -42,10 +42,10 @@ uuid = "66dad0bd-aa9a-41b7-9441-69ab47430ed8"
 version = "1.1.3"
 
 [[deps.AppleAccelerate]]
-deps = ["Libdl", "LinearAlgebra"]
-git-tree-sha1 = "8bf5978109a6704c4ff837118c43ced5472e9dcd"
+deps = ["Libdl", "LinearAlgebra", "SparseArrays"]
+git-tree-sha1 = "9e14ac652fc91b20755445fe197bfcfb9c853b13"
 uuid = "13e28ba4-7ad8-5781-acae-3021b1ed3924"
-version = "0.4.4"
+version = "0.4.5"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -274,16 +274,16 @@ uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 version = "1.8.1"
 
 [[deps.DataFramesMeta]]
-deps = ["Chain", "DataFrames", "MacroTools", "OrderedCollections", "Reexport", "TableMetadataTools"]
-git-tree-sha1 = "b85924d6d95ce52921d68db865af422faf406aca"
+deps = ["Chain", "DataFrames", "MacroTools", "OrderedCollections", "PrettyTables", "Reexport", "TableMetadataTools"]
+git-tree-sha1 = "b0652fb7f3c094cf453bf22e699712a0bed9fc83"
 uuid = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
-version = "0.15.5"
+version = "0.15.6"
 
 [[deps.DataStructures]]
 deps = ["OrderedCollections"]
-git-tree-sha1 = "6c72198e6a101cccdd4c9731d3985e904ba26037"
+git-tree-sha1 = "e357641bb3e0638d353c4b29ea0e40ea644066a6"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.19.1"
+version = "0.19.3"
 
 [[deps.DataValueInterfaces]]
 git-tree-sha1 = "bfc1187b79289637fa0ef6d4436ebdfe6905cbd6"
@@ -321,9 +321,9 @@ version = "1.15.1"
 
 [[deps.DifferentiationInterface]]
 deps = ["ADTypes", "LinearAlgebra"]
-git-tree-sha1 = "529bebbc74b36a4cfea09dd2aecb1288cd713a6d"
+git-tree-sha1 = "961e5d49b64d63b3f2201b0de60065876f4be551"
 uuid = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
-version = "0.7.9"
+version = "0.7.10"
 
     [deps.DifferentiationInterface.extensions]
     DifferentiationInterfaceChainRulesCoreExt = "ChainRulesCore"
@@ -441,15 +441,15 @@ version = "0.1.6"
 
 [[deps.FFMPEG]]
 deps = ["FFMPEG_jll"]
-git-tree-sha1 = "83dc665d0312b41367b7263e8a4d172eac1897f4"
+git-tree-sha1 = "95ecf07c2eea562b5adbd0696af6db62c0f52560"
 uuid = "c87230d0-a227-11e9-1b43-d7ebe4e7570a"
-version = "0.4.4"
+version = "0.4.5"
 
 [[deps.FFMPEG_jll]]
 deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
-git-tree-sha1 = "3a948313e7a41eb1db7a1e733e6335f17b4ab3c4"
+git-tree-sha1 = "ccc81ba5e42497f4e76553a5545665eed577a663"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
-version = "7.1.1+0"
+version = "8.0.0+0"
 
 [[deps.FilePathsBase]]
 deps = ["Compat", "Dates"]
@@ -548,15 +548,15 @@ version = "3.4.0+2"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Qt6Wayland_jll", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
-git-tree-sha1 = "1828eb7275491981fa5f1752a5e126e8f26f8741"
+git-tree-sha1 = "f52c27dd921390146624f3aab95f4e8614ad6531"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.73.17"
+version = "0.73.18"
 
 [[deps.GR_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "FreeType2_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Qt6Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "27299071cc29e409488ada41ec7643e0ab19091f"
+git-tree-sha1 = "4b0406b866ea9fdbaf1148bc9c0b887e59f9af68"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.73.17+0"
+version = "0.73.18+0"
 
 [[deps.GeoFormatTypes]]
 git-tree-sha1 = "8e233d5167e63d708d41f87597433f59a0f213fe"
@@ -643,18 +643,6 @@ git-tree-sha1 = "f923f9a774fcf3f5cb761bfa43aeadd689714813"
 uuid = "2e76f6c2-a576-52d4-95c1-20adfe4de566"
 version = "8.5.1+0"
 
-[[deps.HiGHS]]
-deps = ["HiGHS_jll", "MathOptIIS", "MathOptInterface", "PrecompileTools", "SparseArrays"]
-git-tree-sha1 = "ec682eef11aaae16ace3c67bf9ff60acaef6bac0"
-uuid = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
-version = "1.19.3"
-
-[[deps.HiGHS_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
-git-tree-sha1 = "f56d423e3f583e26ceaef08a15a270b28723c89a"
-uuid = "8fd58aa0-07eb-5a78-9b36-339c94fd15ea"
-version = "1.11.0+1"
-
 [[deps.Hwloc_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "XML2_jll", "Xorg_libpciaccess_jll"]
 git-tree-sha1 = "3d468106a05408f9f7b6f161d9e7715159af247b"
@@ -663,7 +651,9 @@ version = "2.12.2+0"
 
 [[deps.HydroPowerSimulations]]
 deps = ["Dates", "InfrastructureSystems", "JuMP", "PowerSimulations", "PowerSystems"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/HydroPowerSimulations.jl"
+git-tree-sha1 = "9e2055e72b5208866da872102efc15c53c8d5c9c"
+repo-rev = "psy5"
+repo-url = "https://github.com/NREL-Sienna/HydroPowerSimulations.jl.git"
 uuid = "fc1677e0-6ad7-4515-bf3a-bd6bf20a0b1b"
 version = "0.11.1"
 
@@ -681,7 +671,7 @@ version = "0.7.8"
 
 [[deps.InfrastructureSystems]]
 deps = ["CSV", "DataFrames", "DataFramesMeta", "DataStructures", "Dates", "DocStringExtensions", "H5Zblosc", "HDF5", "InteractiveUtils", "JSON3", "Logging", "Mustache", "Pkg", "PrettyTables", "Printf", "Random", "SHA", "SQLite", "Serialization", "StringTemplates", "StructTypes", "TOML", "Tables", "TerminalLoggers", "TimeSeries", "TimerOutputs", "UUIDs", "YAML"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/InfrastructureSystems.jl"
+git-tree-sha1 = "ff907b5ea6e833a372a2e23f7562958cdbb63bc8"
 uuid = "2cd47ed4-ca9b-11e9-27f2-ab636a7671f1"
 version = "3.0.0"
 
@@ -995,12 +985,6 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 version = "1.11.0"
 
-[[deps.MathOptIIS]]
-deps = ["MathOptInterface"]
-git-tree-sha1 = "31d4a6353ea00603104f11384aa44dd8b7162b28"
-uuid = "8c4f8055-bd93-4160-a86b-a0c04941dbff"
-version = "0.1.1"
-
 [[deps.MathOptInterface]]
 deps = ["BenchmarkTools", "CodecBzip2", "CodecZlib", "DataStructures", "ForwardDiff", "JSON3", "LinearAlgebra", "MutableArithmetics", "NaNMath", "OrderedCollections", "PrecompileTools", "Printf", "SparseArrays", "SpecialFunctions", "Test"]
 git-tree-sha1 = "a2cbab4256690aee457d136752c404e001f27768"
@@ -1019,9 +1003,9 @@ uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
 version = "2.28.6+0"
 
 [[deps.Measures]]
-git-tree-sha1 = "c13304c81eec1ed3af7fc20e75fb6b26092a1102"
+git-tree-sha1 = "b513cedd20d9c914783d8ad83d08120702bf2c77"
 uuid = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
-version = "0.3.2"
+version = "0.3.3"
 
 [[deps.Memento]]
 deps = ["Dates", "Distributed", "Requires", "Serialization", "Sockets", "Test", "UUIDs"]
@@ -1106,7 +1090,7 @@ version = "0.3.27+1"
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
-version = "0.8.5+0"
+version = "0.8.1+4"
 
 [[deps.OpenMPI_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Hwloc_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "MPIPreferences", "TOML", "Zlib_jll"]
@@ -1115,10 +1099,10 @@ uuid = "fe0851c0-eecd-5654-98d4-656369965a5c"
 version = "5.0.8+0"
 
 [[deps.OpenSSL]]
-deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "OpenSSL_jll", "Sockets"]
-git-tree-sha1 = "f1a7e086c677df53e064e0fdd2c9d0b0833e3f6e"
+deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "NetworkOptions", "OpenSSL_jll", "Sockets"]
+git-tree-sha1 = "386b47442468acfb1add94bf2d85365dea10cbab"
 uuid = "4d8831e6-92b7-49fb-bdf8-b643e874388c"
-version = "1.5.0"
+version = "1.6.0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1150,9 +1134,13 @@ version = "10.42.0+1"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
-git-tree-sha1 = "f07c06228a1c670ae4c87d1276b92c7c597fdda0"
+git-tree-sha1 = "d922b4d80d1e12c658da7785e754f4796cc1d60d"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
-version = "0.11.35"
+version = "0.11.36"
+weakdeps = ["StatsBase"]
+
+    [deps.PDMats.extensions]
+    StatsBaseExt = "StatsBase"
 
 [[deps.Pango_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl"]
@@ -1201,9 +1189,9 @@ version = "3.3.0"
 
 [[deps.PlotUtils]]
 deps = ["ColorSchemes", "Colors", "Dates", "PrecompileTools", "Printf", "Random", "Reexport", "StableRNGs", "Statistics"]
-git-tree-sha1 = "3ca9a356cd2e113c420f2c13bea19f8d3fb1cb18"
+git-tree-sha1 = "26ca162858917496748aad52bb5d3be4d26a228a"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
-version = "1.4.3"
+version = "1.4.4"
 
 [[deps.Plots]]
 deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "PrecompileTools", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "TOML", "UUIDs", "UnicodeFun", "Unzip"]
@@ -1239,9 +1227,9 @@ version = "1.5.0"
 
 [[deps.PowerFlows]]
 deps = ["DataFrames", "DataStructures", "Dates", "InfrastructureSystems", "JSON3", "KLU", "LineSearches", "LinearAlgebra", "Logging", "PowerNetworkMatrices", "PowerSystems", "SparseArrays", "StaticArrays"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/PowerFlows.jl"
+git-tree-sha1 = "b7fb05821eb2ed748410093619a022c430eb7bbc"
 uuid = "94fada2c-fd9a-4e89-8d82-81405f5cb4f6"
-version = "0.9.0"
+version = "0.10.0"
 
 [[deps.PowerModels]]
 deps = ["InfrastructureModels", "JSON", "JuMP", "LinearAlgebra", "Memento", "NLsolve", "PrecompileTools", "SparseArrays"]
@@ -1251,27 +1239,29 @@ version = "0.21.5"
 
 [[deps.PowerNetworkMatrices]]
 deps = ["AppleAccelerate", "DataStructures", "DocStringExtensions", "HDF5", "InfrastructureSystems", "JSON3", "KLU", "LinearAlgebra", "MKL", "Pardiso", "PowerSystems", "SparseArrays"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/PowerNetworkMatrices.jl"
+git-tree-sha1 = "2c6e5e865b03a7a0443fbbb979570917659b8439"
 uuid = "bed98974-b02a-5e2f-9fe0-a103f5c450dd"
-version = "0.14.0"
+version = "0.14.1"
 
 [[deps.PowerSimulations]]
 deps = ["CSV", "DataFrames", "DataFramesMeta", "DataStructures", "Dates", "Distributed", "Distributions", "DocStringExtensions", "HDF5", "InfrastructureSystems", "InteractiveUtils", "JSON3", "JuMP", "LinearAlgebra", "Logging", "MathOptInterface", "PowerFlows", "PowerModels", "PowerNetworkMatrices", "PowerSystems", "PrettyTables", "ProgressMeter", "Random", "Serialization", "TimeSeries", "TimerOutputs"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/PowerSimulations.jl"
+git-tree-sha1 = "109acb66e5e8a8796778619dab465346f2a0974d"
+repo-rev = "psy5"
+repo-url = "https://github.com/NREL-Sienna/PowerSimulations.jl.git"
 uuid = "e690365d-45e2-57bb-ac84-44ba829e73c4"
-version = "0.30.1"
+version = "0.31.0"
 
 [[deps.PowerSystemCaseBuilder]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DocStringExtensions", "Downloads", "HDF5", "InfrastructureSystems", "JSON3", "LazyArtifacts", "PowerSystems", "PrettyTables", "Random", "SHA", "TimeSeries"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/PowerSystemCaseBuilder.jl"
+git-tree-sha1 = "8987778c25f423b95370d82c9ead6fcfe58f3f40"
 uuid = "f00506e0-b84f-492a-93c2-c0a9afc4364e"
 version = "2.0.1"
 
 [[deps.PowerSystems]]
 deps = ["CSV", "DataFrames", "DataStructures", "Dates", "DocStringExtensions", "InfrastructureSystems", "InteractiveUtils", "JSON3", "LinearAlgebra", "Logging", "PowerFlowData", "PrettyTables", "TimeSeries", "UUIDs", "Unicode", "YAML"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/PowerSystems.jl"
+git-tree-sha1 = "c616e2bab6990d49dc9c4d6b9ce0c2bcebd053b9"
 uuid = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
-version = "5.0.1"
+version = "5.1.0"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
@@ -1404,9 +1394,9 @@ version = "1.3.1"
 
 [[deps.Rmath]]
 deps = ["Random", "Rmath_jll"]
-git-tree-sha1 = "52b99504e2c174d9a8592a89647f5187063d1eb1"
+git-tree-sha1 = "5b3d50eb374cea306873b371d3f8d3915a018f0b"
 uuid = "79098fc4-a85e-5d69-aa6a-4863f24498fa"
-version = "0.8.2"
+version = "0.9.0"
 
 [[deps.Rmath_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1555,9 +1545,9 @@ version = "0.34.7"
 
 [[deps.StatsFuns]]
 deps = ["HypergeometricFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
-git-tree-sha1 = "1ec049c79e13fb2638ddbf8793ab2cbbeb266f45"
+git-tree-sha1 = "91f091a8716a6bb38417a6e6f274602a19aaa685"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-version = "1.5.1"
+version = "1.5.2"
 
     [deps.StatsFuns.extensions]
     StatsFunsChainRulesCoreExt = "ChainRulesCore"
@@ -1569,7 +1559,9 @@ version = "1.5.1"
 
 [[deps.StorageSystemsSimulations]]
 deps = ["DataStructures", "Dates", "DocStringExtensions", "InfrastructureSystems", "JuMP", "LinearAlgebra", "MathOptInterface", "PowerSimulations", "PowerSystems"]
-path = "/Users/pbotin/Documents/GPAC/Sienna/StorageSystemsSimulations.jl"
+git-tree-sha1 = "53a8a15f2acc63499398e46bad6e671bd5629dc3"
+repo-rev = "psy5"
+repo-url = "https://github.com/NREL-Sienna/StorageSystemsSimulations.jl.git"
 uuid = "e2f1a126-19d0-4674-9252-42b2384f8e3c"
 version = "0.12.0"
 
@@ -1920,15 +1912,15 @@ version = "1.6.0+0"
 
 [[deps.Xpress]]
 deps = ["Libdl", "MathOptInterface"]
-git-tree-sha1 = "f48ea69baa747f63b0d08c89ce7bc38d8ef62bd4"
+git-tree-sha1 = "ff732d6316807138fa523a6ae1ca39ab8ea2a52f"
 uuid = "9e70acf3-d6c9-5be6-b5bd-4e2c73e3e054"
-version = "0.17.1"
+version = "0.17.2"
 
 [[deps.YAML]]
 deps = ["Base64", "Dates", "Printf", "StringEncodings"]
-git-tree-sha1 = "2f58ac39f64b41fb812340347525be3b590cce3b"
+git-tree-sha1 = "ed87adf5041ca93203093b03e0d78b6a9d987290"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
-version = "0.4.14"
+version = "0.4.15"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
@@ -1940,6 +1932,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "446b23e73536f84e8037f5dce465e92275f6a308"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
 version = "1.5.7+1"
+
+[[deps.cuOpt]]
+deps = ["Libdl", "MathOptInterface", "PrecompileTools"]
+git-tree-sha1 = "c1d982068da41d06acc77f00039761e3e2ef1704"
+uuid = "29a73d17-8276-40b7-9ffb-d89e58023643"
+version = "0.1.1"
 
 [[deps.eudev_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
