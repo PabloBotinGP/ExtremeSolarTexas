@@ -1,6 +1,6 @@
 
 using PowerSystems
-using PowerGraphics
+#using PowerGraphics
 using PowerSimulations
 using PowerNetworkMatrices
 using Dates
@@ -12,10 +12,25 @@ using TimeSeries
 using StorageSystemsSimulations
 #using HiGHS #solver
 
-using Xpress
+mip_gap = 0.01
+if !isempty(ARGS) && ARGS[1] == "gpu"
+    import Pkg; Pkg.add("cuOpt")
+    using cuOpt
+    optimizer = optimizer_with_attributes(
+        cuOpt.Optimizer,
+        "CUOPT_MIP_RELATIVE_GAP" => mip_gap)
+
+else
+    using Xpress
+    optimizer = optimizer_with_attributes(
+        Xpress.Optimizer,
+        "MAXMEMORYSOFT" => 600000,   # Set the maximum amount of memory the solver can use (in MB)
+        "MIPRELSTOP" => mip_gap)
+end
+
 #using PowerGrap
 
-sys_DA = System("final_sys_DA.json")
+sys_DA = System("DA_sys.json")
 
 
 # south_nuclear1 = get_component(ThermalMultiStart, sys_DA, "SOUTH_TEXAS_NUCLEAR_U1")
@@ -27,12 +42,7 @@ sys_DA = System("final_sys_DA.json")
 # comanche_2 = get_component(ThermalMultiStart, sys_DA, "COMANCHE_PEAK_U2")
 # set_active_power_limits!(comanche_2, (min = 0.008333333333333333, max = 12.15) )
 
-mip_gap = 0.1
 
-optimizer = optimizer_with_attributes(
-                Xpress.Optimizer,
-                #"parallel" => "on",
-                "MIPRELSTOP" => mip_gap)
 
 
 logger= configure_logging(console_level=Logging.Info)
@@ -47,10 +57,10 @@ logger= configure_logging(console_level=Logging.Info)
 #     area_to = get_component(Area, sys_DA, row["to "])
 # area_interchange = AreaInterchange(
 #     name = name,
-#     available = true, 
-#     active_power_flow = flow_to, 
-#     from_area = area_from, 
-#     to_area = area_to, 
+#     available = true,
+#     active_power_flow = flow_to,
+#     from_area = area_from,
+#     to_area = area_to,
 #     flow_limits = (from_to = flow_to, to_from = flow_to)
 
 # )
@@ -59,20 +69,20 @@ logger= configure_logging(console_level=Logging.Info)
 # end
 
 template_uc = template_unit_commitment(;
-network = NetworkModel(CopperPlatePowerModel; use_slacks = true))
+network = NetworkModel(PTDFPowerModel))
 set_device_model!(template_uc, HydroDispatch, HydroDispatchRunOfRiver)
-set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
-set_device_model!(template_uc, ThermalMultiStart, ThermalBasicUnitCommitment)
-set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch,) 
+set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
+set_device_model!(template_uc, ThermalMultiStart, ThermalStandardUnitCommitment)
+set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch,)
 set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-set_device_model!(template_uc, DeviceModel(Line, 
+set_device_model!(template_uc, DeviceModel(Line,
                                         StaticBranch;
                                         use_slacks =true))
 
-set_device_model!(template_uc, DeviceModel(Transformer2W, 
+set_device_model!(template_uc, DeviceModel(Transformer2W,
                                         StaticBranch;
-                                        use_slacks =true))  
-                                                             
+                                        use_slacks =true))
+
 # set_device_model!(template_uc, AreaInterchange, StaticBranch)
 
 storage_model = DeviceModel(
@@ -82,19 +92,24 @@ storage_model = DeviceModel(
         "reservation" => true,
         "energy_target" => false,
         "cycling_limits" => false,
-        "regularization" => true,
+        "regularization" => false,
     ),
 )
 set_device_model!(template_uc, storage_model)
 
-# set_service_model!(template_uc, ServiceModel(VariableReserve{ReserveUp}, RangeReserve))
-# set_service_model!(template_uc, ServiceModel(VariableReserve{ReserveDown}, RangeReserve))
+set_service_model!(template_uc, ServiceModel(VariableReserve{ReserveUp}, RangeReserve; use_slacks = true))
+set_service_model!(template_uc, ServiceModel(VariableReserve{ReserveDown}, RangeReserve; use_slacks = true))
 initial_date = "2018-03-15"
 start_time = DateTime(string(initial_date,"T00:00:00"))
-model = DecisionModel(template_uc, sys_DA; name = "UC", optimizer = optimizer, horizon = Hour(24), calculate_conflict = true)
+model = DecisionModel(template_uc, sys_DA; name = "UC",
+optimizer = optimizer,
+horizon = Hour(24),
+calculate_conflict = true,
+store_variable_names = true
+)
 models = SimulationModels(; decision_models = [model])
 
-steps_sim    = 2
+steps_sim    = 10
 current_date = string( today() )
 sequence = SimulationSequence(
     models = models,
@@ -114,10 +129,20 @@ build!(sim)
 
 execute!(sim)
 
+results = SimulationResults(sim)
+uc = get_decision_problem_results(results, "UC")
+for v in list_variable_names(uc)
+    read_realized_variable(uc, v)
+end
+#vre_power =read_realized_variable(uc, "ActivePowerVariable__RenewableDispatch")
+#thermal_power = read_realized_variable(uc, "ActivePowerVariable__ThermalMultiStart")
+#hermals_power = read_realized_variable(uc, "ActivePowerVariable__ThermalStandard")
+
+#=
 ############################# RESULTS############################
 results = SimulationResults(sim)
 uc = get_decision_problem_results(results, "UC")
-plot_fuel(uc, ylim = (0, 4000), generator_mapping_file = "/Users/acasavan/GitHub_Repos/my_genmap.yaml")
+# plot_fuel(uc, ylim = (0, 4000), generator_mapping_file = "/Users/acasavan/GitHub_Repos/my_genmap.yaml")
 
 vre_power =read_realized_variable(uc, "ActivePowerVariable__RenewableDispatch")
 thermal_power = read_realized_variable(uc, "ActivePowerVariable__ThermalMultiStart")
@@ -136,3 +161,4 @@ uc_LMP_data = lmp["AreaParticipationAssignmentConstraint__ACBus"]
 CSV.write("area_lmp.csv", uc_LMP_data)
 
 plot_dataframe(vre_power)
+=#
