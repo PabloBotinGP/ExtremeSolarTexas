@@ -3468,20 +3468,20 @@ new_thermal = make_thermal_gen(
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
-# gen = get_component(ThermalStandard, sys, "gen-374")
-# HSL = get_active_power_limits(gen).max
-# LSL = get_active_power_limits(gen).min
-# new_thermal = make_thermal_gen(
-#     gen;
-#     name = "FORMOSA GT6",
-#     prime_mover = "GT",
-#     fuel = "NG",
-#     HSL = HSL,
-#     LSL = LSL,
-#     plot = MAKE_PLOTS,
-# )
-# remove_component!(sys, gen)
-# add_component!(sys, new_thermal)
+gen = get_component(ThermalStandard, sys, "gen-374")
+HSL = get_active_power_limits(gen).max
+LSL = get_active_power_limits(gen).min
+new_thermal = make_thermal_gen(
+    gen;
+    name = "FORMOSA GT6",
+    prime_mover = "GT",
+    fuel = "NG",
+    HSL = HSL,
+    LSL = LSL,
+    plot = MAKE_PLOTS,
+)
+remove_component!(sys, gen)
+add_component!(sys, new_thermal)
 
 gen = get_component(ThermalStandard, sys, "gen-375")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "BTE_CC1_1")
@@ -4782,22 +4782,22 @@ new_thermal = make_thermal_gen(
 remove_component!(sys, gen)
 add_component!(sys, new_thermal)
 
-# gen = get_component(ThermalStandard, sys, "gen-472")
-# ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "CVC_CC1_1")
-# HSL = maximum(sced_data[!, "HSL"])
-# LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
-# new_thermal = make_thermal_gen(
-#     gen;
-#     name = "Channelview Cogeneration Plant CC1",
-#     prime_mover = "CC_CT",
-#     fuel = "NG",
-#     HSL = HSL,
-#     LSL = LSL,
-#     sced_data = sced_data,
-#     ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
-# )
-# remove_component!(sys, gen)
-# add_component!(sys, new_thermal)
+gen = get_component(ThermalStandard, sys, "gen-472")
+ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "CVC_CC1_1")
+HSL = maximum(sced_data[!, "HSL"])
+LSL = median(sced_data[sced_data.LSL .> 1, :][!, "LSL"])
+new_thermal = make_thermal_gen(
+    gen;
+    name = "Channelview Cogeneration Plant CC1",
+    prime_mover = "CC_CT",
+    fuel = "NG",
+    HSL = HSL,
+    LSL = LSL,
+    sced_data = sced_data,
+    ercot_fuel = ercot_fuel, plot = MAKE_PLOTS,
+)
+remove_component!(sys, gen)
+add_component!(sys, new_thermal)
 
 gen = get_component(ThermalStandard, sys, "gen-473")
 ercot_fuel, sced_data = get_sced_data(thermal_sced_h5_file, "CVC_CC1_2")
