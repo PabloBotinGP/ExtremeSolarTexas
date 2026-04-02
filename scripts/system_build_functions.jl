@@ -1090,7 +1090,7 @@ function make_storage(original_gen::ThermalStandard; name)
     set_bus!(temp, get_bus(original_gen))
     set_prime_mover_type!(temp, PrimeMovers.BA)
     gen_max_active_power = original_gen.active_power_limits.max
-    c_rating = 1 #randperm!([2, 3, 4])[1]
+    c_rating = rand([2, 3, 4])
     set_initial_storage_capacity_level!(temp, 0.0)
     set_storage_level_limits!(temp, (min = 0.0, max = gen_max_active_power * c_rating))
     set_active_power!(temp, get_active_power(original_gen) / base_power)
